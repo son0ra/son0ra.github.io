@@ -1,283 +1,275 @@
 <!DOCTYPE html>
-
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
   <title>Concerto</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200;400;700;900&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
   <style>
+    @import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@200;400;700;900&family=DM+Mono:wght@300;400&display=swap');
     *, *::before, *::after {
       box-sizing: border-box;
       margin: 0;
       padding: 0;
     }
 
-```
-:root {
-  --bg: #050505;
-  --white: #f5f2ec;
-  --accent: #c8ff00;
-  --accent-dim: #8aad00;
-  --bar-track: #1a1a1a;
-  --bar-fill: #c8ff00;
-  --font-display: 'Unbounded', sans-serif;
-  --font-mono: 'DM Mono', monospace;
-}
+    :root {
+      --bg: #050505;
+      --white: #f5f2ec;
+      --accent: #c8ff00;
+      --accent-dim: #8aad00;
+      --bar-track: #1a1a1a;
+      --bar-fill: #c8ff00;
+      --font-display: 'Unbounded', sans-serif;
+      --font-mono: 'DM Mono', monospace;
+    }
 
-html, body {
-  width: 100%;
-  height: 100%;
-  overflow: hidden;
-  background: var(--bg);
-  color: var(--white);
-  font-family: var(--font-display);
-}
+    html, body {
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      color: var(--white);
+      font-family: var(--font-display);
+    }
 
-/* ── Shared screen base ────────────────────────────── */
-.screen {
-  position: fixed;
-  inset: 0;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  flex-direction: column;
-  padding: env(safe-area-inset-top, 5vw) env(safe-area-inset-right, 5vw)
-           env(safe-area-inset-bottom, 5vw) env(safe-area-inset-left, 5vw);
-  opacity: 0;
-  pointer-events: none;
-  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
-}
+    /* ── Shared screen base ────────────────────────────── */
+    .screen {
+      position: fixed;
+      inset: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      flex-direction: column;
+      padding: env(safe-area-inset-top, 5vw) env(safe-area-inset-right, 5vw)
+               env(safe-area-inset-bottom, 5vw) env(safe-area-inset-left, 5vw);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-.screen.visible {
-  opacity: 1;
-  pointer-events: auto;
-}
+    .screen.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
 
-/* ── 1. SPLASH ─────────────────────────────────────── */
-#splash {
-  background: var(--bg);
-}
+    /* ── 1. SPLASH ─────────────────────────────────────── */
+    #splash {
+      background: var(--bg);
+    }
 
-.splash-inner {
-  max-width: 900px;
-  width: 100%;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 2.5rem;
-  padding: 5vw;
-}
+    .splash-inner {
+      max-width: 900px;
+      width: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 2.5rem;
+      padding: 5vw;
+    }
 
-.concerto-label {
-  font-family: var(--font-mono);
-  font-size: clamp(10px, 1.2vw, 14px);
-  font-weight: 300;
-  letter-spacing: 0.35em;
-  text-transform: uppercase;
-  color: var(--accent);
-  opacity: 0.7;
-}
+    .concerto-label {
+      font-family: var(--font-mono);
+      font-size: clamp(10px, 1.2vw, 14px);
+      font-weight: 300;
+      letter-spacing: 0.35em;
+      text-transform: uppercase;
+      color: var(--accent);
+      opacity: 0.7;
+    }
 
-.concerto-title {
-  font-family: var(--font-display);
-  font-weight: 900;
-  font-size: clamp(52px, 11vw, 140px);
-  letter-spacing: -0.04em;
-  line-height: 0.9;
-  color: var(--white);
-  text-align: center;
-  /* flash toggled via JS */
-  transition: opacity 0.08s ease;
-  user-select: none;
-}
+    .concerto-title {
+      font-family: var(--font-display);
+      font-weight: 900;
+      font-size: clamp(52px, 11vw, 140px);
+      letter-spacing: -0.04em;
+      line-height: 0.9;
+      color: var(--white);
+      text-align: center;
+      /* flash toggled via JS */
+      transition: opacity 0.08s ease;
+      user-select: none;
+    }
 
-.concerto-title span {
-  display: inline-block;
-  position: relative;
-}
+    .concerto-title span {
+      display: inline-block;
+      position: relative;
+    }
 
-/* Glitch underline */
-.concerto-title span::after {
-  content: '';
-  display: block;
-  height: 4px;
-  width: 0%;
-  background: var(--accent);
-  margin-top: 0.15em;
-  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
-}
+    /* Glitch underline */
+    .concerto-title span::after {
+      content: '';
+      display: block;
+      height: 4px;
+      width: 0%;
+      background: var(--accent);
+      margin-top: 0.15em;
+      transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
+    }
 
-#splash.visible .concerto-title span::after {
-  width: 100%;
-}
+    #splash.visible .concerto-title span::after {
+      width: 100%;
+    }
 
-.splash-tagline {
-  font-family: var(--font-mono);
-  font-size: clamp(11px, 1.4vw, 16px);
-  font-weight: 300;
-  letter-spacing: 0.15em;
-  color: rgba(245, 242, 236, 0.35);
-  text-transform: uppercase;
-}
+    .splash-tagline {
+      font-family: var(--font-mono);
+      font-size: clamp(11px, 1.4vw, 16px);
+      font-weight: 300;
+      letter-spacing: 0.15em;
+      color: rgba(245, 242, 236, 0.35);
+      text-transform: uppercase;
+    }
 
-/* decorative grid lines */
-.splash-grid {
-  position: absolute;
-  inset: 0;
-  background-image:
-    linear-gradient(rgba(200, 255, 0, 0.03) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(200, 255, 0, 0.03) 1px, transparent 1px);
-  background-size: 60px 60px;
-  pointer-events: none;
-}
+    /* decorative grid lines */
+    .splash-grid {
+      position: absolute;
+      inset: 0;
+      background-image:
+        linear-gradient(rgba(200, 255, 0, 0.03) 1px, transparent 1px),
+        linear-gradient(90deg, rgba(200, 255, 0, 0.03) 1px, transparent 1px);
+      background-size: 60px 60px;
+      pointer-events: none;
+    }
 
-/* corner marks */
-.corner {
-  position: absolute;
-  width: 28px;
-  height: 28px;
-  border-color: rgba(200, 255, 0, 0.4);
-  border-style: solid;
-}
-.corner-tl { top: 24px; left: 24px; border-width: 2px 0 0 2px; }
-.corner-tr { top: 24px; right: 24px; border-width: 2px 2px 0 0; }
-.corner-bl { bottom: 24px; left: 24px; border-width: 0 0 2px 2px; }
-.corner-br { bottom: 24px; right: 24px; border-width: 0 2px 2px 0; }
+    /* corner marks */
+    .corner {
+      position: absolute;
+      width: 28px;
+      height: 28px;
+      border-color: rgba(200, 255, 0, 0.4);
+      border-style: solid;
+    }
+    .corner-tl { top: 24px; left: 24px; border-width: 2px 0 0 2px; }
+    .corner-tr { top: 24px; right: 24px; border-width: 2px 2px 0 0; }
+    .corner-bl { bottom: 24px; left: 24px; border-width: 0 0 2px 2px; }
+    .corner-br { bottom: 24px; right: 24px; border-width: 0 2px 2px 0; }
 
-/* ── 2. BLACK ──────────────────────────────────────── */
-#black {
-  background: #000000;
-}
+    /* ── 2. BLACK ──────────────────────────────────────── */
+    #black {
+      background: #000000;
+    }
 
-/* ── 3. LOADING BAR ───────────────────────────────── */
-#loading {
-  background: var(--bg);
-  gap: 1.5rem;
-}
+    /* ── 3. LOADING BAR ───────────────────────────────── */
+    #loading {
+      background: var(--bg);
+      gap: 1.5rem;
+    }
 
-.loader-wrap {
-  max-width: 560px;
-  width: 90%;
-  display: flex;
-  flex-direction: column;
-  gap: 1.2rem;
-}
+    .loader-wrap {
+      max-width: 560px;
+      width: 90%;
+      display: flex;
+      flex-direction: column;
+      gap: 1.2rem;
+    }
 
-.loader-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: baseline;
-}
+    .loader-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: baseline;
+    }
 
-.loader-label {
-  font-family: var(--font-mono);
-  font-size: clamp(9px, 1.1vw, 12px);
-  letter-spacing: 0.3em;
-  text-transform: uppercase;
-  color: rgba(245, 242, 236, 0.4);
-}
+    .loader-label {
+      font-family: var(--font-mono);
+      font-size: clamp(9px, 1.1vw, 12px);
+      letter-spacing: 0.3em;
+      text-transform: uppercase;
+      color: rgba(245, 242, 236, 0.4);
+    }
 
-.loader-pct {
-  font-family: var(--font-mono);
-  font-size: clamp(11px, 1.4vw, 16px);
-  color: var(--accent);
-  letter-spacing: 0.05em;
-}
+    .loader-pct {
+      font-family: var(--font-mono);
+      font-size: clamp(11px, 1.4vw, 16px);
+      color: var(--accent);
+      letter-spacing: 0.05em;
+    }
 
-.loader-track {
-  width: 100%;
-  height: 3px;
-  background: var(--bar-track);
-  border-radius: 2px;
-  overflow: hidden;
-  position: relative;
-}
+    .loader-track {
+      width: 100%;
+      height: 3px;
+      background: var(--bar-track);
+      border-radius: 2px;
+      overflow: hidden;
+      position: relative;
+    }
 
-.loader-fill {
-  height: 100%;
-  width: 0%;
-  background: var(--bar-fill);
-  border-radius: 2px;
-  box-shadow: 0 0 12px rgba(200, 255, 0, 0.6);
-  transition: width 0.08s linear;
-}
+    .loader-fill {
+      height: 100%;
+      width: 0%;
+      background: var(--bar-fill);
+      border-radius: 2px;
+      box-shadow: 0 0 12px rgba(200, 255, 0, 0.6);
+      transition: width 0.08s linear;
+    }
 
-/* shimmer on fill */
-.loader-fill::after {
-  content: '';
-  position: absolute;
-  right: 0;
-  top: 0;
-  width: 40px;
-  height: 100%;
-  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
-  animation: shimmer 0.8s ease infinite;
-}
+    /* shimmer on fill */
+    .loader-fill::after {
+      content: '';
+      position: absolute;
+      right: 0;
+      top: 0;
+      width: 40px;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+      animation: shimmer 0.8s ease infinite;
+    }
 
-@keyframes shimmer {
-  0% { transform: translateX(-40px); opacity: 0; }
-  50% { opacity: 1; }
-  100% { transform: translateX(10px); opacity: 0; }
-}
+    @keyframes shimmer {
+      0% { transform: translateX(-40px); opacity: 0; }
+      50% { opacity: 1; }
+      100% { transform: translateX(10px); opacity: 0; }
+    }
 
-.loader-sub {
-  font-family: var(--font-mono);
-  font-size: clamp(9px, 1vw, 11px);
-  color: rgba(245, 242, 236, 0.2);
-  letter-spacing: 0.2em;
-  text-transform: uppercase;
-}
+    .loader-sub {
+      font-family: var(--font-mono);
+      font-size: clamp(9px, 1vw, 11px);
+      color: rgba(245, 242, 236, 0.2);
+      letter-spacing: 0.2em;
+      text-transform: uppercase;
+    }
 
-/* ── Noise overlay ────────────────────────────────── */
-.noise {
-  position: fixed;
-  inset: 0;
-  pointer-events: none;
-  z-index: 999;
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
-  opacity: 0.035;
-  mix-blend-mode: screen;
-}
+    /* ── Noise overlay ────────────────────────────────── */
+    .noise {
+      position: fixed;
+      inset: 0;
+      pointer-events: none;
+      z-index: 999;
+      background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+      opacity: 0.035;
+      mix-blend-mode: screen;
+    }
 
-/* ── Scan line ─────────────────────────────────────── */
-.scanline {
-  position: fixed;
-  top: -100%;
-  left: 0;
-  width: 100%;
-  height: 2px;
-  background: linear-gradient(transparent, rgba(200,255,0,0.06), transparent);
-  pointer-events: none;
-  z-index: 998;
-  animation: scan 6s linear infinite;
-}
+    /* ── Scan line ─────────────────────────────────────── */
+    .scanline {
+      position: fixed;
+      top: -100%;
+      left: 0;
+      width: 100%;
+      height: 2px;
+      background: linear-gradient(transparent, rgba(200,255,0,0.06), transparent);
+      pointer-events: none;
+      z-index: 998;
+      animation: scan 6s linear infinite;
+    }
 
-@keyframes scan {
-  0%   { top: -2px; }
-  100% { top: 100%; }
-}
+    @keyframes scan {
+      0%   { top: -2px; }
+      100% { top: 100%; }
+    }
 
-/* ── Tablet media ─────────────────────────────────── */
-@media (min-width: 600px) and (max-width: 1024px) {
-  .concerto-title { font-size: clamp(72px, 14vw, 120px); }
-  .corner { width: 36px; height: 36px; }
-}
-```
-
+    /* ── Tablet media ─────────────────────────────────── */
+    @media (min-width: 600px) and (max-width: 1024px) {
+      .concerto-title { font-size: clamp(72px, 14vw, 120px); }
+      .corner { width: 36px; height: 36px; }
+    }
   </style>
 </head>
 <body>
 
   <!-- Atmosphere -->
-
   <div class="noise"></div>
   <div class="scanline"></div>
 
   <!-- Screen 1: Splash -->
-
   <div class="screen" id="splash">
     <div class="splash-grid"></div>
     <div class="corner corner-tl"></div>
@@ -292,11 +284,9 @@ html, body {
   </div>
 
   <!-- Screen 2: Black -->
-
   <div class="screen" id="black"></div>
 
   <!-- Screen 3: Loading Bar -->
-
   <div class="screen" id="loading">
     <div class="loader-wrap">
       <div class="loader-header">
@@ -420,6 +410,5 @@ html, body {
     /* ─── Boot ──────────────────────────────────────── */
     pickScreen();
   </script>
-
 </body>
 </html>
