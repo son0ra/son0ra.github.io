@@ -3,411 +3,267 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0" />
-  <title>EV Scooter Sound System</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover" />
+  <title>Concerto</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@200;400;700;900&family=DM+Mono:wght@300;400&display=swap" rel="stylesheet" />
   <style>
-    /* ─── FONTS ─── */
-    @import url('https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Share+Tech+Mono&display=swap');
+    *, *::before, *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
 ```
-/* ─── CSS VARIABLES ─── */
 :root {
-  --bg:         #080c10;
-  --surface:    #0d1520;
-  --panel:      #111c2a;
-  --border:     #1a3045;
-  --accent:     #00e5ff;
-  --accent2:    #00ff9d;
-  --accent3:    #7c4dff;
-  --text:       #cde8f5;
-  --muted:      #4a6a80;
-  --danger:     #ff4060;
-  --glow:       0 0 16px rgba(0,229,255,.45);
-  --glow2:      0 0 24px rgba(0,255,157,.35);
-  --r:          14px;
+  --bg: #050505;
+  --white: #f5f2ec;
+  --accent: #c8ff00;
+  --accent-dim: #8aad00;
+  --bar-track: #1a1a1a;
+  --bar-fill: #c8ff00;
+  --font-display: 'Unbounded', sans-serif;
+  --font-mono: 'DM Mono', monospace;
 }
 
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
-body {
-  font-family: 'Share Tech Mono', monospace;
+html, body {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
   background: var(--bg);
-  color: var(--text);
-  min-height: 100dvh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 0 0 40px;
-  overflow-x: hidden;
+  color: var(--white);
+  font-family: var(--font-display);
 }
 
-/* ─── GRID BACKGROUND ─── */
-body::before {
-  content: '';
+/* ── Shared screen base ────────────────────────────── */
+.screen {
   position: fixed;
   inset: 0;
-  background-image:
-    linear-gradient(rgba(0,229,255,.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(0,229,255,.04) 1px, transparent 1px);
-  background-size: 40px 40px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  padding: env(safe-area-inset-top, 5vw) env(safe-area-inset-right, 5vw)
+           env(safe-area-inset-bottom, 5vw) env(safe-area-inset-left, 5vw);
+  opacity: 0;
   pointer-events: none;
-  z-index: 0;
+  transition: opacity 0.35s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* ─── HEADER ─── */
-header {
+.screen.visible {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+/* ── 1. SPLASH ─────────────────────────────────────── */
+#splash {
+  background: var(--bg);
+}
+
+.splash-inner {
+  max-width: 900px;
   width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2.5rem;
+  padding: 5vw;
+}
+
+.concerto-label {
+  font-family: var(--font-mono);
+  font-size: clamp(10px, 1.2vw, 14px);
+  font-weight: 300;
+  letter-spacing: 0.35em;
+  text-transform: uppercase;
+  color: var(--accent);
+  opacity: 0.7;
+}
+
+.concerto-title {
+  font-family: var(--font-display);
+  font-weight: 900;
+  font-size: clamp(52px, 11vw, 140px);
+  letter-spacing: -0.04em;
+  line-height: 0.9;
+  color: var(--white);
   text-align: center;
-  padding: 28px 20px 16px;
-  position: relative;
-  z-index: 1;
-}
-header h1 {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(1.1rem, 5vw, 1.6rem);
-  font-weight: 900;
-  letter-spacing: .18em;
-  color: var(--accent);
-  text-shadow: var(--glow);
-  text-transform: uppercase;
-}
-header p {
-  font-size: .72rem;
-  color: var(--muted);
-  letter-spacing: .12em;
-  margin-top: 4px;
+  /* flash toggled via JS */
+  transition: opacity 0.08s ease;
+  user-select: none;
 }
 
-/* ─── MAIN CONTAINER ─── */
-.container {
-  width: 100%;
-  max-width: 480px;
-  padding: 0 16px;
-  display: flex;
-  flex-direction: column;
-  gap: 14px;
+.concerto-title span {
+  display: inline-block;
   position: relative;
-  z-index: 1;
 }
 
-/* ─── CARD ─── */
-.card {
-  background: var(--panel);
-  border: 1px solid var(--border);
-  border-radius: var(--r);
-  padding: 18px 20px;
-  position: relative;
-  overflow: hidden;
-}
-.card::before {
+/* Glitch underline */
+.concerto-title span::after {
   content: '';
-  position: absolute;
-  top: 0; left: 0; right: 0;
-  height: 2px;
-  background: linear-gradient(90deg, transparent, var(--accent), transparent);
-  opacity: .5;
-}
-
-/* ─── SPEEDOMETER ─── */
-.speed-card {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  padding: 24px 20px 20px;
-}
-.speed-label {
-  font-size: .65rem;
-  letter-spacing: .2em;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 6px;
-}
-.speed-value {
-  font-family: 'Orbitron', sans-serif;
-  font-size: clamp(4rem, 18vw, 6rem);
-  font-weight: 900;
-  line-height: 1;
-  color: var(--accent);
-  text-shadow: var(--glow);
-  transition: color .3s;
-}
-.speed-value.moving { color: var(--accent2); text-shadow: var(--glow2); }
-.speed-unit {
-  font-size: .75rem;
-  letter-spacing: .2em;
-  color: var(--muted);
-  margin-top: 4px;
-}
-
-/* speed bar */
-.speed-bar-track {
-  width: 100%;
-  height: 6px;
-  background: var(--border);
-  border-radius: 3px;
-  margin-top: 14px;
-  overflow: hidden;
-}
-.speed-bar-fill {
-  height: 100%;
+  display: block;
+  height: 4px;
   width: 0%;
-  border-radius: 3px;
-  background: linear-gradient(90deg, var(--accent), var(--accent2));
-  box-shadow: 0 0 8px var(--accent);
-  transition: width .5s ease;
+  background: var(--accent);
+  margin-top: 0.15em;
+  transition: width 1.2s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* gps status */
-.gps-status {
-  margin-top: 10px;
-  font-size: .65rem;
-  letter-spacing: .12em;
-  color: var(--muted);
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-.gps-dot {
-  width: 7px; height: 7px;
-  border-radius: 50%;
-  background: var(--muted);
-  flex-shrink: 0;
-  transition: background .3s, box-shadow .3s;
-}
-.gps-dot.active { background: var(--accent2); box-shadow: 0 0 8px var(--accent2); }
-.gps-dot.error  { background: var(--danger);  box-shadow: 0 0 8px var(--danger); }
-
-/* ─── BIG START/STOP BUTTON ─── */
-.btn-power {
+#splash.visible .concerto-title span::after {
   width: 100%;
-  padding: 18px;
-  border: none;
-  border-radius: var(--r);
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1rem;
-  font-weight: 700;
-  letter-spacing: .18em;
-  text-transform: uppercase;
-  cursor: pointer;
-  background: linear-gradient(135deg, #00e5ff22, #00e5ff11);
-  border: 1px solid var(--accent);
-  color: var(--accent);
-  box-shadow: var(--glow), inset 0 0 20px rgba(0,229,255,.05);
-  transition: all .2s;
-  position: relative;
-  overflow: hidden;
 }
-.btn-power::after {
-  content: '';
+
+.splash-tagline {
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1.4vw, 16px);
+  font-weight: 300;
+  letter-spacing: 0.15em;
+  color: rgba(245, 242, 236, 0.35);
+  text-transform: uppercase;
+}
+
+/* decorative grid lines */
+.splash-grid {
   position: absolute;
   inset: 0;
-  background: radial-gradient(circle at 50% 50%, rgba(0,229,255,.15), transparent 70%);
-  opacity: 0;
-  transition: opacity .2s;
-}
-.btn-power:active::after { opacity: 1; }
-.btn-power.running {
-  background: linear-gradient(135deg, #ff406022, #ff406011);
-  border-color: var(--danger);
-  color: var(--danger);
-  box-shadow: 0 0 16px rgba(255,64,96,.4), inset 0 0 20px rgba(255,64,96,.05);
-}
-
-/* ─── SECTION LABEL ─── */
-.section-label {
-  font-size: .6rem;
-  letter-spacing: .2em;
-  color: var(--muted);
-  text-transform: uppercase;
-  margin-bottom: 12px;
-}
-
-/* ─── ROW CONTROL ─── */
-.ctrl-row {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 10px;
-  margin-bottom: 14px;
-}
-.ctrl-row:last-child { margin-bottom: 0; }
-.ctrl-name {
-  font-size: .72rem;
-  letter-spacing: .06em;
-  color: var(--text);
-  flex: 1;
-  min-width: 0;
-}
-.ctrl-value {
-  font-size: .7rem;
-  color: var(--accent);
-  min-width: 36px;
-  text-align: right;
-}
-
-/* ─── SLIDER ─── */
-input[type=range] {
-  -webkit-appearance: none;
-  appearance: none;
-  width: 130px;
-  height: 4px;
-  border-radius: 2px;
-  background: var(--border);
-  outline: none;
-  flex-shrink: 0;
-}
-input[type=range]::-webkit-slider-thumb {
-  -webkit-appearance: none;
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
-  cursor: pointer;
-}
-input[type=range]::-moz-range-thumb {
-  width: 16px; height: 16px;
-  border-radius: 50%;
-  background: var(--accent);
-  box-shadow: 0 0 8px var(--accent);
-  cursor: pointer;
-  border: none;
-}
-
-/* ─── TOGGLE ─── */
-.toggle-wrap {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-.toggle {
-  position: relative;
-  width: 44px; height: 24px;
-  flex-shrink: 0;
-}
-.toggle input { display: none; }
-.toggle-track {
-  position: absolute; inset: 0;
-  background: var(--border);
-  border-radius: 12px;
-  cursor: pointer;
-  transition: background .2s;
-}
-.toggle input:checked + .toggle-track { background: var(--accent3); box-shadow: 0 0 8px var(--accent3); }
-.toggle-thumb {
-  position: absolute;
-  top: 3px; left: 3px;
-  width: 18px; height: 18px;
-  border-radius: 50%;
-  background: var(--text);
+  background-image:
+    linear-gradient(rgba(200, 255, 0, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(200, 255, 0, 0.03) 1px, transparent 1px);
+  background-size: 60px 60px;
   pointer-events: none;
-  transition: transform .2s;
 }
-.toggle input:checked ~ .toggle-thumb { transform: translateX(20px); }
 
-/* ─── MANUAL SPEED ─── */
-.manual-speed-card { display: none; }
-.manual-speed-card.visible { display: block; }
+/* corner marks */
+.corner {
+  position: absolute;
+  width: 28px;
+  height: 28px;
+  border-color: rgba(200, 255, 0, 0.4);
+  border-style: solid;
+}
+.corner-tl { top: 24px; left: 24px; border-width: 2px 0 0 2px; }
+.corner-tr { top: 24px; right: 24px; border-width: 2px 2px 0 0; }
+.corner-bl { bottom: 24px; left: 24px; border-width: 0 0 2px 2px; }
+.corner-br { bottom: 24px; right: 24px; border-width: 0 2px 2px 0; }
 
-.speed-mode-tabs {
+/* ── 2. BLACK ──────────────────────────────────────── */
+#black {
+  background: #000000;
+}
+
+/* ── 3. LOADING BAR ───────────────────────────────── */
+#loading {
+  background: var(--bg);
+  gap: 1.5rem;
+}
+
+.loader-wrap {
+  max-width: 560px;
+  width: 90%;
   display: flex;
-  gap: 8px;
-  margin-bottom: 14px;
-}
-.tab-btn {
-  flex: 1;
-  padding: 8px 0;
-  border-radius: 8px;
-  border: 1px solid var(--border);
-  background: transparent;
-  color: var(--muted);
-  font-family: 'Share Tech Mono', monospace;
-  font-size: .68rem;
-  letter-spacing: .1em;
-  cursor: pointer;
-  transition: all .2s;
-}
-.tab-btn.active {
-  border-color: var(--accent3);
-  color: var(--accent3);
-  background: rgba(124,77,255,.1);
-  box-shadow: 0 0 10px rgba(124,77,255,.25);
+  flex-direction: column;
+  gap: 1.2rem;
 }
 
-/* Big +/- speed buttons */
-.speed-btn-row {
+.loader-header {
   display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 12px;
-}
-.speed-step-btn {
-  width: 48px; height: 48px;
-  border-radius: 50%;
-  border: 1px solid var(--border);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 1.4rem;
-  line-height: 1;
-  cursor: pointer;
-  display: flex; align-items: center; justify-content: center;
-  transition: all .15s;
-  flex-shrink: 0;
-  -webkit-user-select: none; user-select: none;
-}
-.speed-step-btn:active { background: var(--border); transform: scale(.93); }
-.speed-step-btn.big    { width: 56px; height: 56px; font-size: 1.7rem; }
-
-.manual-speed-slider {
-  width: 100% !important;
-  margin-top: 4px;
+  justify-content: space-between;
+  align-items: baseline;
 }
 
-.manual-speed-val {
-  text-align: center;
-  font-family: 'Orbitron', sans-serif;
-  font-size: 1.4rem;
-  font-weight: 700;
-  color: var(--accent3);
-  text-shadow: 0 0 12px rgba(124,77,255,.5);
-  margin-bottom: 10px;
-  letter-spacing: .1em;
+.loader-label {
+  font-family: var(--font-mono);
+  font-size: clamp(9px, 1.1vw, 12px);
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: rgba(245, 242, 236, 0.4);
 }
 
-/* ─── VIZ BARS ─── */
-.viz {
-  display: flex;
-  align-items: flex-end;
-  gap: 3px;
-  height: 32px;
-  margin-top: 10px;
+.loader-pct {
+  font-family: var(--font-mono);
+  font-size: clamp(11px, 1.4vw, 16px);
+  color: var(--accent);
+  letter-spacing: 0.05em;
 }
-.viz-bar {
-  flex: 1;
+
+.loader-track {
+  width: 100%;
+  height: 3px;
+  background: var(--bar-track);
   border-radius: 2px;
-  background: var(--border);
-  transition: height .15s ease, background .3s;
-  min-height: 3px;
-}
-
-/* ─── STATUS LOG ─── */
-.log {
-  font-size: .62rem;
-  color: var(--muted);
-  letter-spacing: .06em;
-  line-height: 1.7;
-  max-height: 56px;
   overflow: hidden;
+  position: relative;
 }
-.log span { color: var(--accent2); }
 
-/* ─── FOOTER ─── */
-footer {
-  margin-top: 8px;
-  font-size: .58rem;
-  color: var(--muted);
-  letter-spacing: .1em;
-  text-align: center;
-  opacity: .5;
+.loader-fill {
+  height: 100%;
+  width: 0%;
+  background: var(--bar-fill);
+  border-radius: 2px;
+  box-shadow: 0 0 12px rgba(200, 255, 0, 0.6);
+  transition: width 0.08s linear;
+}
+
+/* shimmer on fill */
+.loader-fill::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  top: 0;
+  width: 40px;
+  height: 100%;
+  background: linear-gradient(90deg, transparent, rgba(255,255,255,0.6), transparent);
+  animation: shimmer 0.8s ease infinite;
+}
+
+@keyframes shimmer {
+  0% { transform: translateX(-40px); opacity: 0; }
+  50% { opacity: 1; }
+  100% { transform: translateX(10px); opacity: 0; }
+}
+
+.loader-sub {
+  font-family: var(--font-mono);
+  font-size: clamp(9px, 1vw, 11px);
+  color: rgba(245, 242, 236, 0.2);
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+
+/* ── Noise overlay ────────────────────────────────── */
+.noise {
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 999;
+  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 256 256' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noise'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noise)' opacity='1'/%3E%3C/svg%3E");
+  opacity: 0.035;
+  mix-blend-mode: screen;
+}
+
+/* ── Scan line ─────────────────────────────────────── */
+.scanline {
+  position: fixed;
+  top: -100%;
+  left: 0;
+  width: 100%;
+  height: 2px;
+  background: linear-gradient(transparent, rgba(200,255,0,0.06), transparent);
+  pointer-events: none;
+  z-index: 998;
+  animation: scan 6s linear infinite;
+}
+
+@keyframes scan {
+  0%   { top: -2px; }
+  100% { top: 100%; }
+}
+
+/* ── Tablet media ─────────────────────────────────── */
+@media (min-width: 600px) and (max-width: 1024px) {
+  .concerto-title { font-size: clamp(72px, 14vw, 120px); }
+  .corner { width: 36px; height: 36px; }
 }
 ```
 
@@ -415,695 +271,155 @@ footer {
 </head>
 <body>
 
-<header>
-  <h1>⚡ EV Sound System</h1>
-  <p>DIY Scooter · Web Audio Engine</p>
-</header>
+  <!-- Atmosphere -->
 
-<div class="container">
+  <div class="noise"></div>
+  <div class="scanline"></div>
 
-  <!-- ── SPEED DISPLAY ── -->
+  <!-- Screen 1: Splash -->
 
-  <div class="card speed-card">
-    <div class="speed-label">Current Speed</div>
-    <div class="speed-value" id="speedDisplay">0</div>
-    <div class="speed-unit">MPH</div>
-    <div class="speed-bar-track">
-      <div class="speed-bar-fill" id="speedBar"></div>
-    </div>
-    <div class="gps-status">
-      <div class="gps-dot" id="gpsDot"></div>
-      <span id="gpsLabel">GPS not started</span>
+  <div class="screen" id="splash">
+    <div class="splash-grid"></div>
+    <div class="corner corner-tl"></div>
+    <div class="corner corner-tr"></div>
+    <div class="corner corner-bl"></div>
+    <div class="corner corner-br"></div>
+    <div class="splash-inner">
+      <p class="concerto-label">◈ Live Performance System</p>
+      <h1 class="concerto-title" id="concertoText"><span>Concerto</span></h1>
+      <p class="splash-tagline">Initializing sequence&nbsp;·&nbsp;Stand by</p>
     </div>
   </div>
 
-  <!-- ── POWER BUTTON ── -->
+  <!-- Screen 2: Black -->
 
-  <button class="btn-power" id="btnPower" onclick="toggleSystem()">
-    ▶ START SOUND SYSTEM
-  </button>
+  <div class="screen" id="black"></div>
 
-  <!-- ── SPEED MODE TABS ── -->
+  <!-- Screen 3: Loading Bar -->
 
-  <div class="card" style="padding:14px 20px;">
-    <div class="section-label">Speed Source</div>
-    <div class="speed-mode-tabs">
-      <button class="tab-btn active" id="tabGps"    onclick="setSpeedMode('gps')">📡 GPS AUTO</button>
-      <button class="tab-btn"        id="tabManual" onclick="setSpeedMode('manual')">🎛 MANUAL</button>
+  <div class="screen" id="loading">
+    <div class="loader-wrap">
+      <div class="loader-header">
+        <span class="loader-label">Loading assets</span>
+        <span class="loader-pct" id="pctLabel">0%</span>
+      </div>
+      <div class="loader-track">
+        <div class="loader-fill" id="loaderFill"></div>
+      </div>
+      <p class="loader-sub">Concerto&nbsp;·&nbsp;System boot</p>
     </div>
-
-```
-<!-- Manual speed controls (hidden until manual mode) -->
-<div id="manualSpeedCard" class="manual-speed-card">
-  <div class="manual-speed-val"><span id="manualMph">0</span> <span style="font-size:.7rem;color:var(--muted)">MPH</span></div>
-
-  <!-- Tap +/- buttons -->
-  <div class="speed-btn-row">
-    <button class="speed-step-btn" onpointerdown="startStep(-5)"  onpointerup="stopStep()" onpointerleave="stopStep()">−5</button>
-    <button class="speed-step-btn" onpointerdown="startStep(-1)"  onpointerup="stopStep()" onpointerleave="stopStep()">−1</button>
-    <div style="flex:1"></div>
-    <button class="speed-step-btn" onpointerdown="startStep(1)"   onpointerup="stopStep()" onpointerleave="stopStep()">+1</button>
-    <button class="speed-step-btn" onpointerdown="startStep(5)"   onpointerup="stopStep()" onpointerleave="stopStep()">+5</button>
   </div>
 
-  <!-- Smooth drag slider -->
-  <input type="range" class="manual-speed-slider" id="sliderManualSpeed"
-         min="0" max="30" step="0.5" value="0"
-         oninput="onManualSlider(this.value)" />
-  <div style="display:flex;justify-content:space-between;margin-top:5px;">
-    <span style="font-size:.6rem;color:var(--muted)">0 mph</span>
-    <span style="font-size:.6rem;color:var(--muted)">15 mph</span>
-    <span style="font-size:.6rem;color:var(--muted)">30 mph</span>
-  </div>
-</div>
-```
+  <script>
+    /* ─── Utilities ─────────────────────────────────── */
+    const rand  = (min, max) => Math.random() * (max - min) + min;
+    const randInt = (min, max) => Math.floor(rand(min, max + 1));
 
-  </div>
+    const splashEl  = document.getElementById('splash');
+    const blackEl   = document.getElementById('black');
+    const loadingEl = document.getElementById('loading');
+    const titleEl   = document.getElementById('concertoText');
+    const fillEl    = document.getElementById('loaderFill');
+    const pctEl     = document.getElementById('pctLabel');
 
-  <!-- ── MASTER CONTROLS ── -->
+    const screens = [splashEl, blackEl, loadingEl];
 
-  <div class="card">
-    <div class="section-label">Master Controls</div>
-
-```
-<!-- Volume -->
-<div class="ctrl-row">
-  <span class="ctrl-name">🔊 Volume</span>
-  <input type="range" id="sliderVolume" min="0" max="100" value="70"
-         oninput="onVolumeChange(this.value)" />
-  <span class="ctrl-value" id="valVolume">70</span>
-</div>
-
-<!-- Base pitch -->
-<div class="ctrl-row">
-  <span class="ctrl-name">🎚 Base Pitch (Hz)</span>
-  <input type="range" id="sliderPitch" min="60" max="300" value="140"
-         oninput="onBasePitchChange(this.value)" />
-  <span class="ctrl-value" id="valPitch">140</span>
-</div>
-
-<!-- Auto pitch toggle -->
-<div class="ctrl-row">
-  <span class="ctrl-name">🚀 Auto Pitch (speed)</span>
-  <label class="toggle">
-    <input type="checkbox" id="chkAutoPitch" checked onchange="onAutoPitchToggle(this.checked)" />
-    <div class="toggle-track"></div>
-    <div class="toggle-thumb"></div>
-  </label>
-</div>
-```
-
-  </div>
-
-  <!-- ── BEEP CONTROLS ── -->
-
-  <div class="card">
-    <div class="section-label">Proximity Beep</div>
-
-```
-<!-- Beep enable -->
-<div class="ctrl-row">
-  <span class="ctrl-name">🔔 Enable Beep</span>
-  <label class="toggle">
-    <input type="checkbox" id="chkBeep" checked onchange="onBeepToggle(this.checked)" />
-    <div class="toggle-track"></div>
-    <div class="toggle-thumb"></div>
-  </label>
-</div>
-
-<!-- Beep frequency -->
-<div class="ctrl-row">
-  <span class="ctrl-name">Beep Freq (Hz)</span>
-  <input type="range" id="sliderBeepFreq" min="300" max="520" value="400"
-         oninput="onBeepFreqChange(this.value)" />
-  <span class="ctrl-value" id="valBeepFreq">400</span>
-</div>
-
-<!-- Beep interval -->
-<div class="ctrl-row">
-  <span class="ctrl-name">Interval (s)</span>
-  <input type="range" id="sliderBeepInterval" min="2" max="4" step="0.5" value="3"
-         oninput="onBeepIntervalChange(this.value)" />
-  <span class="ctrl-value" id="valBeepInterval">3.0</span>
-</div>
-```
-
-  </div>
-
-  <!-- ── VISUALIZER ── -->
-
-  <div class="card">
-    <div class="section-label">Live Waveform</div>
-    <div class="viz" id="vizBars"></div>
-  </div>
-
-  <!-- ── STATUS LOG ── -->
-
-  <div class="card">
-    <div class="section-label">System Log</div>
-    <div class="log" id="logBox">Waiting to start…</div>
-  </div>
-
-</div>
-
-<footer>Web Audio API · No external libraries · iOS Safari compatible</footer>
-
-<!-- ══════════════════════════════════════════
-     JAVASCRIPT — EV SOUND ENGINE
-     ══════════════════════════════════════════ -->
-
-<script>
-"use strict";
-
-// ─────────────────────────────────────────────
-// CONFIG — tweak these values to taste
-// ─────────────────────────────────────────────
-const CFG = {
-  // ── EV Hum oscillator layers ──
-  // Each layer is { type, freqMult, gainMult }
-  // freqMult is relative to basePitch (1.0 = fundamental)
-  humLayers: [
-    { type: "sine",     freqMult: 1.0,  gainMult: 1.00 },  // fundamental
-    { type: "sine",     freqMult: 2.0,  gainMult: 0.30 },  // 2nd harmonic
-    { type: "sine",     freqMult: 3.0,  gainMult: 0.12 },  // 3rd harmonic
-    { type: "triangle", freqMult: 0.5,  gainMult: 0.18 },  // sub-bass warmth
-  ],
-
-  // ── Pitch-vs-speed mapping ──
-  // pitchScale = 1 + (speed / speedMax) * pitchRange
-  // At 0 mph → 1.0×  |  At speedMax mph → (1 + pitchRange)×
-  speedMax:   30,   // mph where pitch is at ceiling
-  pitchRange: 0.60, // e.g. 0.60 = 60% pitch increase at max speed
-
-  // ── Volume-vs-speed ──
-  volumeSpeedBoost: 0.12, // extra gain fraction at max speed (0 = disabled)
-
-  // ── Gentle LFO wobble on the hum (sci-fi feel) ──
-  lfoRate:     5.5,  // Hz
-  lfoDepth:    3.0,  // Hz of wobble
-
-  // ── Soft-start / ramp ──
-  rampTime:    0.4,  // seconds to fade in/out
-
-  // ── Beep defaults ──
-  beepDuration:  0.12,   // seconds
-  beepVolume:    0.18,   // 0–1, kept quiet intentionally
-
-  // ── GPS ──
-  gpsOptions: { enableHighAccuracy: true, maximumAge: 1000, timeout: 5000 },
-};
-
-// ─────────────────────────────────────────────
-// STATE
-// ─────────────────────────────────────────────
-let audioCtx      = null;   // AudioContext (created on user gesture for iOS)
-let masterGain    = null;   // master gain node
-let humNodes      = [];     // array of { osc, gain } per hum layer
-let lfoOsc        = null;   // LFO oscillator
-let lfoGain       = null;   // LFO gain
-
-let isRunning     = false;
-let autoPitch     = true;
-let beepEnabled   = true;
-let beepInterval  = 3;      // seconds
-let beepFreq      = 400;    // Hz
-let beepTimer     = null;
-
-let basePitch     = 140;    // Hz — set by slider
-let masterVolume  = 0.70;   // 0–1
-
-let currentSpeedMph = 0;
-let gpsWatchId    = null;
-
-// Viz state
-const VIZ_COUNT = 20;
-let vizBars = [];
-
-// ─────────────────────────────────────────────
-// DOM HELPERS
-// ─────────────────────────────────────────────
-function log(msg) {
-  const el = document.getElementById("logBox");
-  el.innerHTML = `<span>›</span> ${msg}`;
-}
-
-function buildViz() {
-  const wrap = document.getElementById("vizBars");
-  wrap.innerHTML = "";
-  vizBars = [];
-  for (let i = 0; i < VIZ_COUNT; i++) {
-    const b = document.createElement("div");
-    b.className = "viz-bar";
-    b.style.height = "4px";
-    wrap.appendChild(b);
-    vizBars.push(b);
-  }
-}
-buildViz();
-
-// Animate the visualizer with a fake-but-reactive waveform
-let vizAnimId = null;
-let vizPhase  = 0;
-function animateViz() {
-  if (!isRunning) {
-    vizBars.forEach(b => { b.style.height = "4px"; b.style.background = "var(--border)"; });
-    return;
-  }
-  vizPhase += 0.07 + currentSpeedMph * 0.001;
-  const maxH  = 32;
-  const speed = currentSpeedMph / CFG.speedMax;
-  vizBars.forEach((b, i) => {
-    const t   = Math.sin(vizPhase + i * 0.45) * 0.5 + 0.5;
-    const amp = 0.15 + speed * 0.7;
-    const h   = Math.max(3, Math.round(t * amp * maxH));
-    b.style.height = h + "px";
-    // colour shifts from accent→accent2 as speed increases
-    const r = Math.round(0   + speed * 0);
-    const g = Math.round(229 + speed * (255 - 229));
-    const bl= Math.round(255 + speed * (157 - 255));
-    b.style.background = `rgb(${r},${g},${bl})`;
-  });
-  vizAnimId = requestAnimationFrame(animateViz);
-}
-
-// ─────────────────────────────────────────────
-// AUDIO CONTEXT SETUP (iOS-safe: created on tap)
-// ─────────────────────────────────────────────
-function initAudio() {
-  if (audioCtx) return true;
-  try {
-    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    masterGain = audioCtx.createGain();
-    masterGain.gain.setValueAtTime(0, audioCtx.currentTime);
-    masterGain.connect(audioCtx.destination);
-    log("Audio engine ready");
-    return true;
-  } catch (e) {
-    log("⚠ Web Audio not supported in this browser");
-    return false;
-  }
-}
-
-// ─────────────────────────────────────────────
-// COMPUTE EFFECTIVE PITCH
-// Pitch scales smoothly from basePitch at 0 mph
-// to basePitch × (1 + pitchRange) at speedMax mph.
-// ─────────────────────────────────────────────
-function effectivePitchScale() {
-  if (!autoPitch) return 1.0;
-  const t = Math.min(currentSpeedMph / CFG.speedMax, 1.0);
-  // Ease-in curve so low speeds feel natural
-  return 1.0 + Math.pow(t, 1.2) * CFG.pitchRange;
-}
-
-// ─────────────────────────────────────────────
-// BUILD / TEAR DOWN HUM OSCILLATORS
-// ─────────────────────────────────────────────
-function buildHum() {
-  if (!audioCtx) return;
-  tearDownHum();
-
-  // LFO — modulates pitch slightly for that electric-motor shimmer
-  lfoOsc  = audioCtx.createOscillator();
-  lfoGain = audioCtx.createGain();
-  lfoOsc.type            = "sine";
-  lfoOsc.frequency.value = CFG.lfoRate;
-  lfoGain.gain.value     = CFG.lfoDepth;
-  lfoOsc.connect(lfoGain);
-  lfoOsc.start();
-
-  // Build each harmonic layer
-  const scale = effectivePitchScale();
-  CFG.humLayers.forEach(layer => {
-    const osc  = audioCtx.createOscillator();
-    const gain = audioCtx.createGain();
-
-    osc.type            = layer.type;
-    osc.frequency.value = basePitch * layer.freqMult * scale;
-    gain.gain.value     = layer.gainMult;
-
-    // LFO → frequency of fundamental only (keeps sub-bass steady)
-    if (layer.freqMult === 1.0) {
-      lfoGain.connect(osc.frequency);
+    /* ─── Show / hide screens ───────────────────────── */
+    function showOnly(el) {
+      screens.forEach(s => s.classList.remove('visible'));
+      el.classList.add('visible');
     }
 
-    osc.connect(gain);
-    gain.connect(masterGain);
-    osc.start();
-    humNodes.push({ osc, gain });
-  });
-}
+    /* ─── Flash logic (splash) ──────────────────────── */
+    let flashTimer = null;
+    let flashOn    = true;
 
-function tearDownHum() {
-  humNodes.forEach(({ osc, gain }) => {
-    try { osc.stop(); } catch(e) {}
-    osc.disconnect();
-    gain.disconnect();
-  });
-  humNodes = [];
-  if (lfoOsc)  { try { lfoOsc.stop(); } catch(e) {} lfoOsc.disconnect();  lfoOsc  = null; }
-  if (lfoGain) { lfoGain.disconnect(); lfoGain = null; }
-}
-
-// ─────────────────────────────────────────────
-// UPDATE PITCH IN REAL TIME (no rebuild needed)
-// ─────────────────────────────────────────────
-function updateHumPitch() {
-  if (!audioCtx || humNodes.length === 0) return;
-  const now   = audioCtx.currentTime;
-  const scale = effectivePitchScale();
-  const ramp  = 0.3; // seconds for smooth glide
-
-  CFG.humLayers.forEach((layer, i) => {
-    const targetFreq = basePitch * layer.freqMult * scale;
-    humNodes[i].osc.frequency.linearRampToValueAtTime(targetFreq, now + ramp);
-  });
-}
-
-// Update master gain for speed-reactive volume
-function updateHumVolume() {
-  if (!audioCtx || !masterGain) return;
-  const t       = Math.min(currentSpeedMph / CFG.speedMax, 1.0);
-  const boost   = 1.0 + t * CFG.volumeSpeedBoost;
-  const target  = masterVolume * boost;
-  masterGain.gain.linearRampToValueAtTime(target, audioCtx.currentTime + 0.3);
-}
-
-// ─────────────────────────────────────────────
-// BEEP SYNTH — pure sine, soft envelope
-// ─────────────────────────────────────────────
-function playBeep() {
-  if (!audioCtx || !isRunning || !beepEnabled) return;
-  const now  = audioCtx.currentTime;
-  const dur  = CFG.beepDuration;
-
-  const osc  = audioCtx.createOscillator();
-  const env  = audioCtx.createGain();
-
-  osc.type            = "sine";
-  osc.frequency.value = beepFreq;
-
-  // Soft envelope: quick attack, smooth decay
-  env.gain.setValueAtTime(0, now);
-  env.gain.linearRampToValueAtTime(CFG.beepVolume, now + 0.015);
-  env.gain.exponentialRampToValueAtTime(0.001, now + dur);
-
-  osc.connect(env);
-  env.connect(audioCtx.destination); // bypass masterGain so beep vol is independent
-  osc.start(now);
-  osc.stop(now + dur + 0.01);
-
-  // Auto-cleanup
-  osc.onended = () => { osc.disconnect(); env.disconnect(); };
-}
-
-function scheduleBeep() {
-  clearInterval(beepTimer);
-  if (!beepEnabled || !isRunning) return;
-  // Random interval in [beepInterval - 0.5, beepInterval + 0.5] for natural feel
-  const jitter = (Math.random() - 0.5) * 1.0;
-  const delay  = (beepInterval + jitter) * 1000;
-  beepTimer = setTimeout(() => {
-    playBeep();
-    scheduleBeep(); // reschedule
-  }, delay);
-}
-
-// ─────────────────────────────────────────────
-// MAIN START / STOP
-// ─────────────────────────────────────────────
-function toggleSystem() {
-  if (!isRunning) {
-    startSystem();
-  } else {
-    stopSystem();
-  }
-}
-
-function startSystem() {
-  if (!initAudio()) return;
-
-  // iOS requires AudioContext to be resumed after a user gesture
-  if (audioCtx.state === "suspended") {
-    audioCtx.resume().catch(e => log("⚠ Audio resume failed: " + e.message));
-  }
-
-  isRunning = true;
-  buildHum();
-
-  // Fade in
-  const now = audioCtx.currentTime;
-  masterGain.gain.cancelScheduledValues(now);
-  masterGain.gain.setValueAtTime(0, now);
-  masterGain.gain.linearRampToValueAtTime(masterVolume, now + CFG.rampTime);
-
-  // Update button
-  const btn = document.getElementById("btnPower");
-  btn.textContent = "■ STOP SOUND SYSTEM";
-  btn.classList.add("running");
-
-  // Start GPS
-  startGPS();
-
-  // Start beep loop
-  scheduleBeep();
-
-  // Start visualizer
-  cancelAnimationFrame(vizAnimId);
-  animateViz();
-
-  log("Sound system active");
-}
-
-function stopSystem() {
-  isRunning = false;
-
-  // Fade out
-  if (masterGain && audioCtx) {
-    const now = audioCtx.currentTime;
-    masterGain.gain.cancelScheduledValues(now);
-    masterGain.gain.setValueAtTime(masterGain.gain.value, now);
-    masterGain.gain.linearRampToValueAtTime(0, now + CFG.rampTime);
-    setTimeout(() => tearDownHum(), (CFG.rampTime + 0.1) * 1000);
-  } else {
-    tearDownHum();
-  }
-
-  clearTimeout(beepTimer);
-  stopGPS();
-
-  const btn = document.getElementById("btnPower");
-  btn.textContent = "▶ START SOUND SYSTEM";
-  btn.classList.remove("running");
-
-  cancelAnimationFrame(vizAnimId);
-  vizBars.forEach(b => { b.style.height = "4px"; b.style.background = "var(--border)"; });
-
-  log("Sound system stopped");
-}
-
-// ─────────────────────────────────────────────
-// GPS
-// ─────────────────────────────────────────────
-function startGPS() {
-  if (speedMode === "manual") return; // manual mode owns speed
-  if (!("geolocation" in navigator)) {
-    setGpsStatus("error", "GPS not available");
-    return;
-  }
-  setGpsStatus("pending", "Requesting GPS…");
-  gpsWatchId = navigator.geolocation.watchPosition(onGpsSuccess, onGpsError, CFG.gpsOptions);
-}
-
-function stopGPS() {
-  if (gpsWatchId !== null) {
-    navigator.geolocation.clearWatch(gpsWatchId);
-    gpsWatchId = null;
-  }
-  setGpsStatus("", "GPS stopped");
-  setSpeed(0);
-}
-
-function onGpsSuccess(pos) {
-  // speed is in m/s; convert to mph
-  const mps = pos.coords.speed;
-  const mph = (mps !== null && mps >= 0) ? mps * 2.23694 : 0;
-  setSpeed(mph);
-  setGpsStatus("active", `GPS active · acc ±${Math.round(pos.coords.accuracy)}m`);
-}
-
-function onGpsError(err) {
-  const msgs = { 1: "Permission denied", 2: "Position unavailable", 3: "Timeout" };
-  setGpsStatus("error", "GPS: " + (msgs[err.code] || "Error"));
-}
-
-function setGpsStatus(state, text) {
-  const dot   = document.getElementById("gpsDot");
-  const label = document.getElementById("gpsLabel");
-  dot.className = "gps-dot" + (state ? " " + state : "");
-  label.textContent = text;
-}
-
-// ─────────────────────────────────────────────
-// SPEED UPDATE — drives pitch, volume, UI
-// ─────────────────────────────────────────────
-function setSpeed(mph) {
-  currentSpeedMph = Math.max(0, mph);
-  const rounded = Math.round(currentSpeedMph);
-
-  // Speed display
-  const display = document.getElementById("speedDisplay");
-  display.textContent = rounded;
-  display.classList.toggle("moving", rounded > 1);
-
-  // Speed bar (max 30 mph = 100%)
-  const pct = Math.min(currentSpeedMph / CFG.speedMax * 100, 100);
-  document.getElementById("speedBar").style.width = pct + "%";
-
-  // Update audio
-  if (isRunning) {
-    updateHumPitch();
-    updateHumVolume();
-  }
-}
-
-// ─────────────────────────────────────────────
-// CONTROL CALLBACKS
-// ─────────────────────────────────────────────
-function onVolumeChange(val) {
-  masterVolume = val / 100;
-  document.getElementById("valVolume").textContent = val;
-  if (masterGain && isRunning) {
-    masterGain.gain.linearRampToValueAtTime(masterVolume, audioCtx.currentTime + 0.1);
-  }
-}
-
-function onBasePitchChange(val) {
-  basePitch = parseInt(val, 10);
-  document.getElementById("valPitch").textContent = val;
-  updateHumPitch();
-}
-
-function onAutoPitchToggle(checked) {
-  autoPitch = checked;
-  updateHumPitch();
-  log("Auto pitch " + (checked ? "enabled" : "disabled"));
-}
-
-function onBeepToggle(checked) {
-  beepEnabled = checked;
-  if (checked && isRunning) {
-    scheduleBeep();
-    log("Beep enabled");
-  } else {
-    clearTimeout(beepTimer);
-    log("Beep disabled");
-  }
-}
-
-function onBeepFreqChange(val) {
-  beepFreq = parseInt(val, 10);
-  document.getElementById("valBeepFreq").textContent = val;
-}
-
-function onBeepIntervalChange(val) {
-  beepInterval = parseFloat(val);
-  document.getElementById("valBeepInterval").textContent = parseFloat(val).toFixed(1);
-  // Reschedule with new interval
-  if (isRunning && beepEnabled) scheduleBeep();
-}
-
-// ─────────────────────────────────────────────
-// DEMO / TESTING — simulate speed with taps
-// (Handy when GPS isn't available. Remove if unneeded.)
-// Long-press the speed display to simulate 0→25 mph ramp.
-// ─────────────────────────────────────────────
-let demoTimer = null;
-let demoSpeed = 0;
-let demoDir   = 1;
-
-document.getElementById("speedDisplay").addEventListener("pointerdown", () => {
-  if (!isRunning) return;
-  log("Demo mode: simulating speed…");
-  clearInterval(demoTimer);
-  demoTimer = setInterval(() => {
-    demoSpeed += demoDir * 0.8;
-    if (demoSpeed >= 25) demoDir = -1;
-    if (demoSpeed <= 0)  { demoDir = 1; demoSpeed = 0; }
-    setSpeed(demoSpeed);
-  }, 80);
-});
-document.getElementById("speedDisplay").addEventListener("pointerup",   () => clearInterval(demoTimer));
-document.getElementById("speedDisplay").addEventListener("pointerleave",() => clearInterval(demoTimer));
-
-// ─────────────────────────────────────────────
-// MANUAL SPEED MODE
-// ─────────────────────────────────────────────
-let speedMode    = "gps";   // "gps" | "manual"
-let manualSpeed  = 0;       // mph set by manual controls
-let stepTimer    = null;    // hold-to-repeat timer
-let stepInterval = null;
-
-function setSpeedMode(mode) {
-  speedMode = mode;
-  document.getElementById("tabGps").classList.toggle("active",    mode === "gps");
-  document.getElementById("tabManual").classList.toggle("active", mode === "manual");
-  document.getElementById("manualSpeedCard").classList.toggle("visible", mode === "manual");
-
-  if (mode === "gps") {
-    // Resume GPS if system is running, reset manual speed
-    if (isRunning) startGPS();
-    log("Speed source: GPS");
-  } else {
-    // Stop GPS, take over with manual speed
-    if (gpsWatchId !== null) {
-      navigator.geolocation.clearWatch(gpsWatchId);
-      gpsWatchId = null;
+    function stopFlash() {
+      clearTimeout(flashTimer);
+      titleEl.style.opacity = '1';
     }
-    setGpsStatus("", "Manual mode — GPS paused");
-    setSpeed(manualSpeed);
-    log("Speed source: Manual");
-  }
-}
 
-// Called when the slider is dragged
-function onManualSlider(val) {
-  manualSpeed = parseFloat(val);
-  applyManualSpeed();
-}
+    function startFlash() {
+      stopFlash();
 
-// +/- step buttons — tap once or hold to repeat
-function startStep(delta) {
-  applyStep(delta);
-  // After short delay, start repeating
-  stepTimer = setTimeout(() => {
-    stepInterval = setInterval(() => applyStep(delta), 80);
-  }, 350);
-}
-function stopStep() {
-  clearTimeout(stepTimer);
-  clearInterval(stepInterval);
-}
-function applyStep(delta) {
-  manualSpeed = Math.max(0, Math.min(30, manualSpeed + delta));
-  applyManualSpeed();
-}
+      function toggle() {
+        flashOn = !flashOn;
+        titleEl.style.opacity = flashOn ? '1' : '0';
+        const interval = rand(0, 10) * 1000;
+        flashTimer = setTimeout(toggle, interval);
+      }
 
-// Sync manual speed → UI + audio
-function applyManualSpeed() {
-  // Sync slider
-  document.getElementById("sliderManualSpeed").value = manualSpeed;
-  // Sync readout
-  document.getElementById("manualMph").textContent = Math.round(manualSpeed);
-  // Only update the main speed if we're in manual mode
-  if (speedMode === "manual") setSpeed(manualSpeed);
-}
+      const firstDelay = rand(0, 10) * 1000;
+      flashTimer = setTimeout(toggle, firstDelay);
+    }
 
-// ─────────────────────────────────────────────
-// INIT
-// ─────────────────────────────────────────────
-log("Tap START to initialise audio & request GPS");
-</script>
+    /* ─── Loading bar logic ─────────────────────────── */
+    let barInterval = null;
+    let barPct      = 0;
+
+    function stopBar() {
+      clearInterval(barInterval);
+      barPct = 0;
+      fillEl.style.width = '0%';
+      pctEl.textContent  = '0%';
+    }
+
+    function startBar() {
+      stopBar();
+      const duration = rand(1000, 2800);
+      const tick     = 40; // ms per frame
+      const steps    = duration / tick;
+      const increment = 100 / steps;
+
+      barInterval = setInterval(() => {
+        barPct = Math.min(barPct + increment, 100);
+        const display = Math.floor(barPct);
+        fillEl.style.width  = barPct + '%';
+        pctEl.textContent   = display + '%';
+
+        if (barPct >= 100) {
+          clearInterval(barInterval);
+        }
+      }, tick);
+    }
+
+    /* ─── Screen switcher ───────────────────────────── */
+    const SCREEN_IDS = ['concerto_splash', 'black_screen', 'loading_bar'];
+
+    function pickScreen() {
+      const choice = SCREEN_IDS[randInt(0, 2)];
+      const nextDelay = rand(0, 3) * 1000;
+
+      // Teardown
+      stopFlash();
+      stopBar();
+
+      if (choice === 'concerto_splash') {
+        showOnly(splashEl);
+        startFlash();
+        setTimeout(pickScreen, nextDelay);
+
+      } else if (choice === 'black_screen') {
+        showOnly(blackEl);
+        // Black screen always hides after exactly 0.5s
+        setTimeout(() => {
+          blackEl.classList.remove('visible');
+          // After hiding, wait remaining time (if any) before next screen
+          const remaining = Math.max(0, nextDelay - 500);
+          setTimeout(pickScreen, remaining);
+        }, 500);
+
+      } else {
+        // loading_bar
+        showOnly(loadingEl);
+        startBar();
+        setTimeout(pickScreen, nextDelay);
+      }
+    }
+
+    /* ─── Boot ──────────────────────────────────────── */
+    pickScreen();
+  </script>
 
 </body>
 </html>
