@@ -4,7 +4,7 @@
 
 # Lucent
 
-This project is just files and images I choose to host on Github. This website is meant for my friends and my personal use, although I don't mind this being shown in public.
+## Info about me and my projects that are in development
 
 ![Logo](https://raw.githubusercontent.com/1ucent/lucent.github.io/refs/heads/Lucent/brand/FluencyMP.png)
 
