@@ -8,8 +8,8 @@ This project is just files and images I choose to host on Github. This website i
 
 ![Logo](https://raw.githubusercontent.com/1ucent/lucent.github.io/refs/heads/Lucent/brand/FluencyMP.png)
 
-## Fluency
-A simple but modern music player.
+# Fluency
+## Pedestrian warnings on commuter vehicles, made easy.
 
 Fluency is currently unavailable to the public and is still in development. 
 ## License
