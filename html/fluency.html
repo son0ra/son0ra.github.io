@@ -1,0 +1,1220 @@
+<!DOCTYPE html>
+
+<html lang="en">
+<head>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="Fluency AVAS">
+  <title>Fluency AVAS</title>
+
+  <link rel="icon" type="image/png" href="https://raw.githubusercontent.com/1ucent/1ucent.github.io/refs/heads/Lucent/brand/fluency-1080x1080-ios.png">
+  <link rel="apple-touch-icon" href="https://raw.githubusercontent.com/1ucent/1ucent.github.io/refs/heads/Lucent/brand/fluency-1080x1080-ios.png">
+
+  <style>
+    /* ─────────────────────────────────────────
+       RESET & TOKENS
+    ───────────────────────────────────────── */
+    *, *::before, *::after {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    :root {
+      /* Brand */
+      --accent:        #00c896;
+      --accent-light:  rgba(0, 200, 150, 0.12);
+      --accent-border: rgba(0, 200, 150, 0.28);
+
+      /* Surface */
+      --bg:            #f2f2f7;
+      --card:          #ffffff;
+
+      /* Text */
+      --tx:            #000000;
+      --tx2:           rgba(60, 60, 67, 0.6);
+      --tx3:           rgba(60, 60, 67, 0.36);
+
+      /* Separators */
+      --sep:           rgba(60, 60, 67, 0.12);
+
+      /* Typography */
+      --font: -apple-system, 'SF Pro Display', 'Helvetica Neue', sans-serif;
+      --mono: 'SF Mono', 'Menlo', 'DM Mono', monospace;
+
+      /* Safe areas */
+      --safe-top: env(safe-area-inset-top,  44px);
+      --safe-bot: env(safe-area-inset-bottom, 34px);
+    }
+
+    html, body {
+      height: 100%;
+      width: 100%;
+      overflow: hidden;
+      background: var(--bg);
+      font-family: var(--font);
+      color: var(--tx);
+      -webkit-font-smoothing: antialiased;
+    }
+
+/* ─────────────────────────────────────────
+       APP SHELL
+    ───────────────────────────────────────── */
+    #app {
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      background: var(--bg);
+      overflow: hidden;
+      animation: app-in 0.4s 0.75s both ease;
+    }
+    @keyframes app-in {
+      from { opacity: 0; transform: translateY(10px); }
+      to   { opacity: 1; transform: none; }
+    }
+
+    /* ─────────────────────────────────────────
+       HEADER
+    ───────────────────────────────────────── */
+    .header {
+      width: 100%;
+      max-width: 430px;
+      flex-shrink: 0;
+      padding-right: 20px;
+      padding-left: 20px;
+    }
+
+    /* Active status pill */
+    .status-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--accent-light);
+      border: 1px solid var(--accent-border);
+      border-radius: 20px;
+      padding: 4px 11px;
+      font-size: 12px;
+      font-weight: 600;
+      color: var(--accent);
+      letter-spacing: 0.2px;
+    }
+    .status-dot {
+      width: 6px;
+      height: 6px;
+      border-radius: 50%;
+      background: var(--accent);
+      animation: blink 1.4s ease-in-out infinite;
+    }
+    @keyframes blink {
+      0%, 100% { opacity: 1; }
+      50%       { opacity: 0.3; }
+    }
+
+    /* ─────────────────────────────────────────
+       PAGES (tab content)
+    ───────────────────────────────────────── */
+    .pages {
+      flex: 1;
+      width: 100%;
+      max-width: 430px;
+      position: relative;
+      overflow: hidden;
+      margin-top: 8px;
+      pointer-events: none;
+    }
+    .page { pointer-events: all; }
+
+    .page {
+      position: absolute;
+      inset: 0;
+      overflow-y: auto;
+      overflow-x: hidden;
+      padding: 0 16px 16px;
+      opacity: 0;
+      transform: translateX(28px);
+      transition:
+        opacity   0.26s ease,
+        transform 0.26s cubic-bezier(0.4, 0, 0.2, 1);
+      pointer-events: none;
+      -webkit-overflow-scrolling: touch;
+    }
+    .page::-webkit-scrollbar { display: none; }
+    .page.active    { opacity: 1; transform: none;           pointer-events: all; }
+    .page.slide-out { transform: translateX(-28px); }
+
+    /* ─────────────────────────────────────────
+       TAB BAR
+    ───────────────────────────────────────── */
+    .tabbar {
+      width: 100%;
+      max-width: 430px;
+      padding: 8px 16px calc(var(--safe-bot) + 4px);
+      flex-shrink: 0;
+    }
+    .tabbar-track {
+      display: flex;
+      background: rgba(255, 255, 255, 0.7);
+      border: 1px solid rgba(0, 0, 0, 0.08);
+      border-radius: 22px;
+      padding: 5px;
+      gap: 3px;
+      backdrop-filter: blur(20px) saturate(1.8);
+      box-shadow:
+        0 2px 16px rgba(0, 0, 0, 0.08),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+    }
+    .tab-btn {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: 3px;
+      padding: 10px 8px;
+      border-radius: 17px;
+      border: none;
+      background: transparent;
+      color: var(--tx3);
+      font-family: var(--font);
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.18s, color 0.18s;
+    }
+    .tab-btn.active {
+      background: rgba(255, 255, 255, 0.95);
+      color: var(--accent);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.8);
+    }
+    .tab-icon  { font-size: 19px; line-height: 1; }
+    .tab-label { font-size: 10px; font-weight: 600; letter-spacing: 0.6px; text-transform: uppercase; }
+
+    /* ─────────────────────────────────────────
+       CARDS & ROWS
+    ───────────────────────────────────────── */
+    .card {
+      background: var(--card);
+      border-radius: 16px;
+      overflow: hidden;
+      margin-bottom: 10px;
+      box-shadow: 0 1px 0 rgba(0, 0, 0, 0.06);
+    }
+
+    .row {
+      display: flex;
+      align-items: center;
+      padding: 13px 16px;
+      gap: 12px;
+      min-height: 50px;
+    }
+    .row + .row       { border-top: 1px solid var(--sep); }
+    .row + .sub-row   { border-top: 1px solid var(--sep); }
+    .sub-row + .row   { border-top: 1px solid var(--sep); }
+    .sub-row {
+      padding: 8px 16px 14px;
+      border-top: 1px solid var(--sep);
+    }
+
+    .label    { font-size: 15px; color: var(--tx);  flex: 1; }
+    .label-lg { font-size: 17px; color: var(--tx);  flex: 1; letter-spacing: -0.2px; }
+    .hint     { font-size: 13px; color: var(--tx3); font-family: var(--mono); }
+
+    .section-label {
+      font-size: 12px;
+      font-weight: 600;
+      letter-spacing: 0.7px;
+      text-transform: uppercase;
+      color: var(--tx2);
+      padding: 0 4px 6px;
+      margin-top: 8px;
+    }
+
+    /* Small icon circle */
+    .icon-circle {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      flex-shrink: 0;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: var(--accent-light);
+    }
+
+    /* ─────────────────────────────────────────
+       SEGMENTED CONTROL
+    ───────────────────────────────────────── */
+    .seg {
+      display: flex;
+      width: 100%;
+      background: rgba(120, 120, 128, 0.12);
+      border-radius: 10px;
+      padding: 2px;
+      gap: 2px;
+    }
+    .seg-btn {
+      flex: 1;
+      background: transparent;
+      border: none;
+      color: var(--tx2);
+      font-family: var(--font);
+      font-size: 13px;
+      font-weight: 500;
+      padding: 7px 8px;
+      border-radius: 8px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.18s, color 0.18s;
+    }
+    .seg-btn.active {
+      background: var(--card);
+      color: var(--tx);
+      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12);
+    }
+
+    /* ─────────────────────────────────────────
+       TOGGLE SWITCH
+    ───────────────────────────────────────── */
+    .toggle {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 51px;
+      height: 31px;
+      border-radius: 16px;
+      background: rgba(120, 120, 128, 0.2);
+      border: none;
+      cursor: pointer;
+      flex-shrink: 0;
+      outline: none;
+      position: relative;
+      transition: background 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .toggle::after {
+      content: '';
+      position: absolute;
+      top: 2px;
+      left: 2px;
+      width: 27px;
+      height: 27px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.28), 0 0.5px 2px rgba(0, 0, 0, 0.2);
+      transition: transform 0.25s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    .toggle:checked             { background: var(--accent); }
+    .toggle:checked::after      { transform: translateX(20px); }
+
+    /* ─────────────────────────────────────────
+       RANGE SLIDER
+    ───────────────────────────────────────── */
+    .slider {
+      -webkit-appearance: none;
+      appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(120, 120, 128, 0.2);
+      outline: none;
+      cursor: pointer;
+    }
+    .slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 22px;
+      height: 22px;
+      border-radius: 50%;
+      background: #fff;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.25);
+      cursor: pointer;
+      transition: transform 0.12s ease;
+    }
+    .slider:active::-webkit-slider-thumb { transform: scale(1.18); }
+
+    /* ─────────────────────────────────────────
+       COLLAPSE
+    ───────────────────────────────────────── */
+    .collapse          { display: none; }
+    .collapse.open     { display: block; }
+
+    /* ─────────────────────────────────────────
+       PLAY AREA
+    ───────────────────────────────────────── */
+    .play-area {
+      position: fixed;
+      top: 10%;
+      left: 50%;
+      transform: translateX(-50%);
+      z-index: 10;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+    }
+
+    /* Ambient glow behind button */
+    .play-glow {
+      position: absolute;
+      width: 300px;
+      height: 300px;
+      border-radius: 50%;
+      background: radial-gradient(circle, rgba(0,200,150,.12) 0%, transparent 70%);
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.6s ease;
+    }
+    .play-glow.on {
+      opacity: 1;
+      animation: glow-pulse 2.2s ease-in-out infinite;
+    }
+    @keyframes glow-pulse {
+      0%, 100% { transform: scale(1); }
+      50%       { transform: scale(1.07); }
+    }
+
+    /* Main button - now square */
+    #play-btn {
+      width: 180px;
+      height: 180px;
+      border-radius: 36px;
+      border: none;
+      background: transparent;
+      cursor: pointer;
+      outline: none;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+      position: relative;
+      transition: transform 0.15s cubic-bezier(0.34, 1.56, 0.64, 1);
+    }
+    #play-btn:active { transform: scale(0.92); }
+
+    /* Gradient accent border */
+    .btn-ring {
+      position: absolute;
+      inset: -3px;
+      border-radius: 36px;
+      background: linear-gradient(135deg, #a8ffcb, #00c9a7);
+      opacity: 0;
+      transition: opacity 0.3s ease;
+    }
+    #play-btn.on .btn-ring { opacity: 1; }
+
+    /* Frosted glass face */
+    .btn-face {
+      position: absolute;
+      inset: 3px;
+      border-radius: 32px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: rgba(255, 255, 255, 0.75);
+      border: 1px solid rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(20px) saturate(1.8);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.06),
+        0 12px 32px rgba(0, 0, 0, 0.1);
+      transition: background 0.2s ease;
+    }
+    #play-btn.on .btn-face {
+      background: rgba(220, 255, 240, 0.85);
+      box-shadow:
+        inset 0 2px 0 rgba(255, 255, 255, 0.95),
+        inset 0 -1px 0 rgba(0, 0, 0, 0.04),
+        0 0 24px rgba(0, 200, 150, 0.25),
+        0 12px 32px rgba(0, 0, 0, 0.08);
+    }
+    .btn-face svg { pointer-events: none; }
+
+    /* Chord name below button */
+    .chord-label {
+      font-size: 26px;
+      font-weight: 700;
+      letter-spacing: -0.5px;
+      color: var(--accent);
+    }
+
+/* GPS pill */
+    .gps-pill {
+      display: inline-flex;
+      align-items: center;
+      gap: 5px;
+      background: var(--accent-light);
+      border: 1px solid var(--accent-border);
+      border-radius: 20px;
+      padding: 3px 10px;
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--accent);
+      font-family: var(--mono);
+    }
+
+    /* ─────────────────────────────────────────
+       NOTE GRID
+    ───────────────────────────────────────── */
+    .note-grid {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 5px;
+      padding: 10px 14px 14px;
+      border-top: 1px solid var(--sep);
+    }
+    .note-btn {
+      background: rgba(120, 120, 128, 0.08);
+      border: 1px solid transparent;
+      border-radius: 9px;
+      padding: 8px 4px;
+      font-family: var(--mono);
+      font-size: 12px;
+      font-weight: 500;
+      color: var(--tx2);
+      cursor: pointer;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.12s, color 0.12s, border-color 0.12s;
+    }
+    .note-btn.active {
+      background: var(--accent-light);
+      border-color: var(--accent-border);
+      color: var(--accent);
+      font-weight: 600;
+    }
+
+    /* ─────────────────────────────────────────
+       VOICE EDITOR ROWS
+    ───────────────────────────────────────── */
+    .voice-row {
+      display: flex;
+      align-items: center;
+      padding: 10px 16px;
+      gap: 10px;
+      border-top: 1px solid var(--sep);
+    }
+    .voice-index {
+      width: 22px;
+      height: 22px;
+      border-radius: 7px;
+      background: var(--accent-light);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 10px;
+      font-weight: 700;
+      font-family: var(--mono);
+      color: var(--accent);
+      flex-shrink: 0;
+    }
+    .voice-name {
+      font-size: 14px;
+      color: var(--tx2);
+      flex: 1;
+      font-family: var(--mono);
+    }
+    .voice-oct-btns { display: flex; gap: 4px; }
+    .voice-oct-btn {
+      width: 28px;
+      height: 28px;
+      border-radius: 9px;
+      background: rgba(120, 120, 128, 0.1);
+      border: none;
+      color: var(--tx2);
+      font-size: 16px;
+      font-weight: 400;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      -webkit-tap-highlight-color: transparent;
+      transition: background 0.12s;
+    }
+    .voice-oct-btn:active { background: var(--accent-light); color: var(--accent); }
+    .voice-hz {
+      font-size: 11px;
+      font-family: var(--mono);
+      color: var(--tx3);
+      width: 54px;
+      text-align: right;
+    }
+  </style>
+
+</head>
+<body>
+
+  <!-- ─── APP SHELL ─── -->
+
+  <div id="app">
+
+```
+<!-- Header (status only) -->
+<div class="header" style="padding-top: calc(var(--safe-top) + 8px); padding-bottom: 0; display: flex; justify-content: flex-end;">
+  <div id="status-slot"></div>
+</div>
+
+<!-- Tab pages -->
+<div class="pages">
+
+  <!-- ══ AVAS PAGE ══ -->
+  <div class="page active" id="page-avas">
+
+    <div class="play-area">
+      <div class="play-glow" id="play-glow"></div>
+
+      <button id="play-btn">
+        <div class="btn-ring"></div>
+        <div class="btn-face">
+          <svg width="72" height="72" viewBox="0 0 24 24" fill="currentColor" stroke="none">
+            <path d="M8 5v14l11-7z" fill="#00c896"/>
+          </svg>
+        </div>
+      </button>
+
+      <div id="chord-label" class="chord-label">Cmaj7</div>
+
+
+    </div>
+
+
+
+
+
+  </div><!-- /page-avas -->
+
+  <!-- ══ TONE EDITOR PAGE ══ -->
+  <div class="page" id="page-editor">
+
+    <!-- Chord card -->
+    <div class="section-label">Chord</div>
+    <div class="card">
+      <div class="row">
+        <span class="label">Root Note</span>
+        <span id="root-display"
+              style="font-size:15px; font-weight:600; color:var(--accent);">C</span>
+      </div>
+      <div class="note-grid" id="note-grid"></div>
+      <div class="row" style="padding-bottom: 8px;">
+        <span class="label">Chord Type</span>
+      </div>
+      <div style="padding: 0 14px 14px;">
+        <div class="seg" id="chord-type-seg"></div>
+      </div>
+    </div>
+
+    <!-- Voices card -->
+    <div class="section-label">Voices</div>
+    <div class="card">
+      <div class="row" style="padding-bottom:10px;">
+        <span style="font-size:13px; color:var(--tx2);">Adjust octave per voice</span>
+      </div>
+      <div id="voices-container"></div>
+    </div>
+
+    <!-- Developer Mode -->
+    <div class="section-label">Settings</div>
+    <div class="card">
+      <div class="row">
+        <span class="label">Developer Mode</span>
+        <input type="checkbox" class="toggle" id="tog-dev" onchange="toggleDevMode()">
+      </div>
+    </div>
+
+    <!-- Speed card (developer only) -->
+    <div id="speed-section" style="display:none;">
+      <div class="section-label">Speed Response</div>
+      <div class="card">
+        <div class="row">
+          <div class="icon-circle">
+            <svg width="16" height="16" viewBox="0 0 24 24"
+                 fill="none" stroke="var(--accent)" stroke-width="2.5"
+                 stroke-linecap="round" stroke-linejoin="round">
+              <path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/>
+            </svg>
+          </div>
+          <span class="label">Speed Effect</span>
+          <input type="checkbox" class="toggle" id="tog-speed" onchange="toggleSpeed()">
+        </div>
+
+        <div id="speed-opts" class="collapse">
+          <div class="row" style="padding: 8px 16px;">
+            <div class="seg">
+              <button class="seg-btn active" id="btn-speed-manual" onclick="setSpeedMode('manual')">Manual</button>
+              <button class="seg-btn"        id="btn-speed-live"   onclick="setSpeedMode('live')">Live GPS</button>
+            </div>
+          </div>
+          <div id="speed-manual-panel" class="sub-row">
+            <div style="display:flex; justify-content:space-between; margin-bottom:9px;">
+              <span style="font-size:13px; color:var(--tx2);">Speed</span>
+              <span class="hint" id="speed-pct">0%</span>
+            </div>
+            <input type="range" class="slider" id="speed-val"
+                   min="0" max="1" step="0.01" value="0" oninput="onSpeedInput()">
+          </div>
+          <div id="speed-live-panel" style="display:none;">
+            <div class="row" style="padding: 8px 16px;">
+              <div class="seg">
+                <button class="seg-btn active" id="btn-sens-walk" onclick="setSensitivity('walk')">🚶 Walk</button>
+                <button class="seg-btn"        id="btn-sens-car"  onclick="setSensitivity('car')">🚗 Car</button>
+              </div>
+            </div>
+            <div class="row">
+              <span class="label" style="color:var(--tx2); font-size:14px;">Live speed</span>
+              <div class="gps-pill">
+                <div class="status-dot"></div>
+                <span id="gps-label">waiting…</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Beep card -->
+    <div class="section-label">Alert Beep</div>
+    <div class="card">
+      <div class="row">
+        <div class="icon-circle">
+          <svg width="16" height="16" viewBox="0 0 24 24"
+               fill="none" stroke="var(--accent)" stroke-width="2.5"
+               stroke-linecap="round" stroke-linejoin="round">
+            <path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"/>
+            <path d="M13.73 21a2 2 0 0 1-3.46 0"/>
+          </svg>
+        </div>
+        <span class="label">Beep</span>
+        <span class="hint">0.5 s on · 1.5 s off</span>
+        <input type="checkbox" class="toggle" id="tog-beep" onchange="toggleBeep()">
+      </div>
+
+      <div id="beep-opts" class="collapse">
+        <div class="sub-row">
+          <div style="display:flex; justify-content:space-between; margin-bottom:9px;">
+            <span style="font-size:13px; color:var(--tx2);">Frequency</span>
+            <span class="hint" id="beep-hz-label">520 Hz</span>
+          </div>
+          <input type="range" class="slider" id="beep-hz"
+                 min="200" max="2000" step="1" value="520" oninput="onBeepHz()">
+        </div>
+        <div class="sub-row">
+          <div style="display:flex; justify-content:space-between; margin-bottom:9px;">
+            <span style="font-size:13px; color:var(--tx2);">Volume</span>
+            <span class="hint" id="beep-vol-label">18%</span>
+          </div>
+          <input type="range" class="slider" id="beep-vol"
+                 min="0" max="1" step="0.01" value="0.18" oninput="onBeepVol()">
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /page-editor -->
+</div><!-- /pages -->
+
+<!-- Tab bar -->
+<div class="tabbar">
+  <div class="tabbar-track">
+    <button class="tab-btn active" id="tab-avas" onclick="switchTab('avas')">
+      <div class="tab-icon">
+        <svg width="22" height="22" viewBox="0 0 100 100"
+             fill="none" stroke="currentColor" stroke-width="9"
+             stroke-linecap="round" stroke-linejoin="round">
+          <polyline points="5,50 15,50 20,38 25,62 33,50 38,18 46,82 54,50 60,22 67,62 75,50 80,42 85,50 95,50"/>
+        </svg>
+      </div>
+      <div class="tab-label">AVAS</div>
+    </button>
+    <button class="tab-btn" id="tab-editor" onclick="switchTab('editor')">
+      <div class="tab-icon">
+        <svg width="20" height="20" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2.3"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/>
+          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/>
+        </svg>
+      </div>
+      <div class="tab-label">Tone Editor</div>
+    </button>
+  </div>
+</div>
+```
+
+  </div><!-- /app -->
+
+  <script>
+
+
+    // ═══════════════════════════════════════════
+    //  MUSIC THEORY
+    // ═══════════════════════════════════════════
+    const NOTES = ['C','C#','D','D#','E','F','F#','G','G#','A','A#','B'];
+
+    const CHORD_TYPES = {
+      maj7:  [0, 4,  7, 11],
+      maj:   [0, 4,  7],
+      min7:  [0, 3,  7, 10],
+      dom7:  [0, 4,  7, 10],
+      sus2:  [0, 2,  7],
+      add9:  [0, 4,  7, 14],
+    };
+
+    const CHORD_LABELS = {
+      maj7: 'Maj7', maj: 'Maj', min7: 'Min7',
+      dom7: 'Dom7', sus2: 'Sus2', add9: 'Add9',
+    };
+
+    function midiToHz(midi) {
+      return 440 * Math.pow(2, (midi - 69) / 12);
+    }
+
+    function noteHz(root, semis, octave) {
+      return midiToHz(12 * (octave + 1) + NOTES.indexOf(root) + semis);
+    }
+
+    // ═══════════════════════════════════════════
+    //  CHORD STATE
+    // ═══════════════════════════════════════════
+    let rootNote    = 'C';
+    let chordType   = 'maj7';
+    let voiceOcts   = [4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5]; // lower then upper voices
+    let activeFreqs = [];
+
+    function computeChord() {
+      const semis = CHORD_TYPES[chordType];
+      const lower = semis.map((s, i) => noteHz(rootNote, s, voiceOcts[i]                ?? 4));
+      const upper = semis.map((s, i) => noteHz(rootNote, s, voiceOcts[semis.length + i] ?? 5));
+      activeFreqs = [...lower, ...upper];
+
+      document.getElementById('root-display').textContent = rootNote;
+
+      renderVoices();
+      if (voiceOscNodes.length) retune();
+      saveSettings();
+    }
+
+    function buildNoteGrid() {
+      const grid = document.getElementById('note-grid');
+      grid.innerHTML = '';
+      NOTES.forEach(note => {
+        const btn = document.createElement('button');
+        btn.className = 'note-btn' + (note === rootNote ? ' active' : '');
+        btn.textContent = note;
+        btn.onclick = () => { rootNote = note; buildNoteGrid(); computeChord(); };
+        grid.appendChild(btn);
+      });
+    }
+
+    function buildChordTypeSeg() {
+      const seg = document.getElementById('chord-type-seg');
+      seg.innerHTML = '';
+      Object.entries(CHORD_LABELS).forEach(([key, label]) => {
+        const btn = document.createElement('button');
+        btn.className = 'seg-btn' + (key === chordType ? ' active' : '');
+        btn.textContent = label;
+        btn.style.fontSize = '12px';
+        btn.onclick = () => { chordType = key; buildChordTypeSeg(); computeChord(); };
+        seg.appendChild(btn);
+      });
+    }
+
+    function renderVoices() {
+      const container = document.getElementById('voices-container');
+      container.innerHTML = '';
+      const semis = CHORD_TYPES[chordType];
+      const total = semis.length * 2;
+
+      for (let i = 0; i < total; i++) {
+        const isUpper = i >= semis.length;
+        const si      = isUpper ? i - semis.length : i;
+        const noteName = NOTES[(NOTES.indexOf(rootNote) + semis[si]) % 12];
+        const oct      = voiceOcts[i] ?? (isUpper ? 5 : 4);
+        const freq     = activeFreqs[i];
+
+        const row = document.createElement('div');
+        row.className = 'voice-row';
+        row.innerHTML = `
+          <div class="voice-index">${i + 1}</div>
+          <div class="voice-name">${noteName}${oct}</div>
+          <div class="voice-oct-btns">
+            <button class="voice-oct-btn" onclick="changeOct(${i}, -1)">−</button>
+            <button class="voice-oct-btn" onclick="changeOct(${i}, +1)">+</button>
+          </div>
+          <div class="voice-hz">${freq ? freq.toFixed(1) + ' Hz' : ''}</div>
+        `;
+        container.appendChild(row);
+      }
+    }
+
+    function changeOct(i, d) {
+      const semis = CHORD_TYPES[chordType];
+      const fb = i >= semis.length ? 5 : 4;
+      voiceOcts[i] = Math.max(1, Math.min(8, (voiceOcts[i] ?? fb) + d));
+      computeChord();
+    }
+
+    // ═══════════════════════════════════════════
+    //  TAB NAVIGATION
+    // ═══════════════════════════════════════════
+    let activeTab = 'avas';
+
+    function switchTab(tab) {
+      if (tab === activeTab) return;
+      const prev = activeTab;
+      activeTab  = tab;
+
+      const prevPage = document.getElementById('page-' + prev);
+      const nextPage = document.getElementById('page-' + tab);
+
+      prevPage.classList.remove('active');
+      prevPage.classList.add('slide-out');
+      nextPage.classList.remove('slide-out');
+      nextPage.classList.add('active');
+
+      document.getElementById('tab-' + prev).classList.remove('active');
+      document.getElementById('tab-' + tab).classList.add('active');
+
+      setTimeout(() => prevPage.classList.remove('slide-out'), 300);
+    }
+
+    // ═══════════════════════════════════════════
+    //  AUDIO ENGINE
+    // ═══════════════════════════════════════════
+    let audioCtx       = null;
+    let oscs           = [];
+    let masterGain     = null;
+    let fadeTimer      = null;
+    let voiceOscNodes  = [];
+    let voiceLFOs      = [];
+    let voiceLFOGains  = [];
+
+    // Beep state
+    let beepOn       = false;
+    let beepInterval = null;
+    let beepHz       = 520;
+    let beepVol      = 0.18;
+
+    // Developer mode
+    let devMode = false;
+
+    // Speed state (starts with GPS enabled by default)
+    let speedOn   = true;
+    let speedMode = 'live';
+    let sens      = 'walk';
+    let geoWatch  = null;
+    const SENS    = { walk: 3.5, car: 40 };
+
+    function toggleDevMode() {
+      devMode = document.getElementById('tog-dev').checked;
+      document.getElementById('speed-section').style.display = devMode ? 'block' : 'none';
+    }
+
+
+
+    // Per-voice constants
+    const DETUNES  = [-7, 5, -4,  8, -6, 4, -3,  7,  3, -5,  6, -2];
+    const STAGGERS = [ 0, .07, .14, .22, .05, .12, .19, .28, .03, .09, .16, .24];
+    const LFO_BASE = [4.5, 4.8, 5.1, 5.4, 4.7, 5.0, 5.3, 5.6, 4.6, 4.9, 5.2, 5.5];
+
+    function setPlaying(on) {
+      document.getElementById('play-btn').classList.toggle('on', on);
+      document.getElementById('play-glow').classList.toggle('on', on);
+      document.getElementById('status-slot').innerHTML = on
+        ? `<div class="status-pill"><div class="status-dot"></div>ACTIVE</div>`
+        : '';
+    }
+
+    // ── Reverb ────────────────────────────────
+    function makeReverb(ctx) {
+      const len = ctx.sampleRate * 2.5;
+      const buf = ctx.createBuffer(2, len, ctx.sampleRate);
+      for (let ch = 0; ch < 2; ch++) {
+        const d = buf.getChannelData(ch);
+        for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 3);
+      }
+      const c = ctx.createConvolver();
+      c.buffer = buf;
+      return c;
+    }
+
+    // ── Start chord ───────────────────────────
+    function startChord() {
+      if (oscs.length) return;
+      audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      const now = audioCtx.currentTime;
+      setPlaying(true);
+
+      // Reverb send
+      const reverb    = makeReverb(audioCtx);
+      const reverbGain = audioCtx.createGain();
+      reverbGain.gain.value = 0.55;
+      reverb.connect(reverbGain);
+      reverbGain.connect(audioCtx.destination);
+
+      // Delay send
+      const delay         = audioCtx.createDelay(1.0);
+      delay.delayTime.value = 0.32;
+      const delayFeedback = audioCtx.createGain();
+      delayFeedback.gain.value = 0.38;
+      const delayGain     = audioCtx.createGain();
+      delayGain.gain.value = 0.3;
+      delay.connect(delayFeedback);
+      delayFeedback.connect(delay);
+      delay.connect(delayGain);
+      delayGain.connect(audioCtx.destination);
+
+      // Master bus
+      masterGain = audioCtx.createGain();
+      masterGain.gain.setValueAtTime(0, now);
+      masterGain.gain.linearRampToValueAtTime(0.7, now + 0.6);
+      masterGain.connect(audioCtx.destination);
+      masterGain.connect(reverb);
+      masterGain.connect(delay);
+
+      voiceOscNodes = [];
+      voiceLFOs     = [];
+      voiceLFOGains = [];
+
+      activeFreqs.forEach((f, i) => {
+        const up = i >= activeFreqs.length / 2;
+        const st = STAGGERS[i] ?? 0;
+        const osc = audioCtx.createOscillator();
+        osc.type = 'sine';
+        osc.frequency.value = f;
+        osc.detune.value = DETUNES[i] ?? 0;
+        const lfo = audioCtx.createOscillator();
+        lfo.frequency.value = LFO_BASE[i] ?? 5;
+        const lg = audioCtx.createGain();
+        lg.gain.value = up ? 6 : 3;
+        lfo.connect(lg);
+        lg.connect(osc.frequency);
+        lfo.start(now + st);
+        const g = audioCtx.createGain();
+        g.gain.setValueAtTime(0, now + st);
+        g.gain.linearRampToValueAtTime(up ? 0.09 : 0.13, now + st + 0.5);
+        osc.connect(g);
+        g.connect(masterGain);
+        osc.start(now + st);
+        oscs.push(osc, lfo);
+        voiceOscNodes.push(osc);
+        voiceLFOs.push(lfo);
+        voiceLFOGains.push(lg);
+      });
+
+      if (beepOn) {
+        scheduleBeep();
+        beepInterval = setInterval(() => beepOn && audioCtx && scheduleBeep(), 2000);
+      }
+
+      if (speedOn) setTimeout(() => onSpeedInput(), 60);
+    }
+
+    // ── Live retune ───────────────────────────
+    function retune() {
+      if (!audioCtx || !voiceOscNodes.length) return;
+      activeFreqs.forEach((freq, i) => {
+        if (voiceOscNodes[i]) {
+          voiceOscNodes[i].frequency.setTargetAtTime(freq, audioCtx.currentTime, 0.08);
+        }
+      });
+    }
+
+    // ── Stop with fade ────────────────────────
+    function stopChord() {
+      if (!oscs.length) return;
+      if (fadeTimer)    { clearTimeout(fadeTimer); fadeTimer = null; }
+      if (beepInterval) { clearInterval(beepInterval); beepInterval = null; }
+      setPlaying(false);
+      const ctx  = audioCtx;
+      const os = oscs.slice();
+      if (masterGain && ctx) {
+        const t = ctx.currentTime;
+        masterGain.gain.setValueAtTime(masterGain.gain.value, t);
+        masterGain.gain.exponentialRampToValueAtTime(0.0001, t + 2.5);
+        setTimeout(() => {
+          os.forEach(o => { try { o.stop(); } catch (_) {} });
+          ctx.close();
+        }, 2600);
+      } else {
+        os.forEach(o => { try { o.stop(); } catch (_) {} });
+        if (ctx) ctx.close();
+      }
+      oscs = []; voiceOscNodes = []; voiceLFOs = []; voiceLFOGains = [];
+      audioCtx = null; masterGain = null;
+    }
+
+    // ── Beep ──────────────────────────────────
+    function scheduleBeep() {
+      if (!beepOn || !audioCtx) return;
+      const osc  = audioCtx.createOscillator();
+      const gain = audioCtx.createGain();
+      osc.type            = 'sine';
+      osc.frequency.value = beepHz;
+      gain.gain.setValueAtTime(beepVol, audioCtx.currentTime);
+      gain.gain.setValueAtTime(0,       audioCtx.currentTime + 0.5);
+      osc.connect(gain);
+      gain.connect(audioCtx.destination);
+      osc.start();
+      osc.stop(audioCtx.currentTime + 0.5);
+    }
+
+    function toggleBeep() {
+      beepOn = document.getElementById('tog-beep').checked;
+      document.getElementById('beep-opts').classList.toggle('open', beepOn);
+      if (beepOn && audioCtx) {
+        scheduleBeep();
+        beepInterval = setInterval(() => beepOn && audioCtx && scheduleBeep(), 2000);
+      } else if (!beepOn && beepInterval) {
+        clearInterval(beepInterval);
+        beepInterval = null;
+      }
+    }
+
+    function onBeepHz() {
+      beepHz = parseFloat(document.getElementById('beep-hz').value);
+      document.getElementById('beep-hz-label').textContent = Math.round(beepHz) + ' Hz';
+    }
+
+    function onBeepVol() {
+      beepVol = parseFloat(document.getElementById('beep-vol').value);
+      document.getElementById('beep-vol-label').textContent = Math.round(beepVol * 100) + '%';
+    }
+
+    // ── Speed ─────────────────────────────────
+    function applySpeed(s) {
+      if (!audioCtx) return;
+      const detuneShift = s * 1200;
+      voiceOscNodes.forEach((osc, i) =>
+        osc.detune.setTargetAtTime((DETUNES[i] ?? 0) + detuneShift, audioCtx.currentTime, 0.1)
+      );
+      voiceLFOs.forEach((lfo, i) =>
+        lfo.frequency.setTargetAtTime((LFO_BASE[i] ?? 5) * (1 + s * 5), audioCtx.currentTime, 0.1)
+      );
+      voiceLFOGains.forEach((g, i) => {
+        const base = i >= activeFreqs.length / 2 ? 6 : 3;
+        g.gain.setTargetAtTime(base * (1 + s * 3), audioCtx.currentTime, 0.1);
+      });
+    }
+
+    function onSpeedInput() {
+      const v = parseFloat(document.getElementById('speed-val').value);
+      document.getElementById('speed-pct').textContent = Math.round(v * 100) + '%';
+      applySpeed(v);
+    }
+
+    function toggleSpeed() {
+      speedOn = document.getElementById('tog-speed').checked;
+      document.getElementById('speed-opts').classList.toggle('open', speedOn);
+      if (!speedOn) { stopGeo(); applySpeed(0); }
+      else if (speedMode === 'live') startGeo();
+    }
+
+    function setSpeedMode(mode) {
+      speedMode = mode;
+      const isManual = mode === 'manual';
+      document.getElementById('btn-speed-manual').classList.toggle('active', isManual);
+      document.getElementById('btn-speed-live').classList.toggle('active',   !isManual);
+      document.getElementById('speed-manual-panel').style.display = isManual ? 'block' : 'none';
+      document.getElementById('speed-live-panel').style.display   = isManual ? 'none'  : 'block';
+      if (!isManual && speedOn) startGeo(); else stopGeo();
+      if (isManual) onSpeedInput();
+    }
+
+    function setSensitivity(mode) {
+      sens = mode;
+      const isWalk = mode === 'walk';
+      document.getElementById('btn-sens-walk').classList.toggle('active', isWalk);
+      document.getElementById('btn-sens-car').classList.toggle('active',  !isWalk);
+    }
+
+    function startGeo() {
+      if (geoWatch !== null) return;
+      if (!navigator.geolocation) {
+        document.getElementById('gps-label').textContent = 'not available';
+        return;
+      }
+      document.getElementById('gps-label').textContent = 'requesting…';
+      geoWatch = navigator.geolocation.watchPosition(
+        pos => {
+          const mps = pos.coords.speed ?? 0;
+          document.getElementById('gps-label').textContent = mps.toFixed(1) + ' m/s';
+          applySpeed(Math.min(mps / SENS[sens], 1));
+        },
+        err => {
+          const msg = err.code === 1 ? 'permission denied' : 'no signal';
+          document.getElementById('gps-label').textContent = msg;
+        },
+        { enableHighAccuracy: true, maximumAge: 1000, timeout: 8000 }
+      );
+    }
+
+    function stopGeo() {
+      if (geoWatch !== null) {
+        navigator.geolocation.clearWatch(geoWatch);
+        geoWatch = null;
+      }
+    }
+
+    // ── Lock / hold ───────────────────────────
+// ── Button events ─────────────────────────
+    const playBtn = document.getElementById('play-btn');
+    playBtn.addEventListener('click', () => {
+      if (oscs.length) stopChord(); else startChord();
+    });
+
+    // Save on every state change
+    document.getElementById('tog-dev').addEventListener('change', saveSettings);
+    document.getElementById('tog-beep').addEventListener('change', saveSettings);
+    document.getElementById('beep-hz').addEventListener('change', saveSettings);
+    document.getElementById('beep-vol').addEventListener('change', saveSettings);
+    document.getElementById('tog-speed').addEventListener('change', saveSettings);
+
+    // ═══════════════════════════════════════════
+    //  BROWSER STORAGE
+    // ═══════════════════════════════════════════
+    function saveSettings() {
+      const settings = {
+        rootNote, chordType, voiceOcts,
+        devMode, beepHz, beepVol,
+        speedMode, sens
+      };
+      localStorage.setItem('fluency-settings', JSON.stringify(settings));
+    }
+
+    function loadSettings() {
+      const saved = localStorage.getItem('fluency-settings');
+      if (saved) {
+        const s = JSON.parse(saved);
+        rootNote = s.rootNote ?? getRandomNote();
+        chordType = s.chordType ?? 'maj7';
+        voiceOcts = s.voiceOcts ?? [4, 4, 4, 4, 5, 5, 5, 5, 5, 5, 5, 5];
+        devMode = s.devMode ?? false;
+        beepHz = s.beepHz ?? 520;
+        beepVol = s.beepVol ?? 0.18;
+        speedMode = s.speedMode ?? 'live';
+        sens = s.sens ?? 'walk';
+
+        // Update UI to reflect loaded settings
+        document.getElementById('tog-dev').checked = devMode;
+        document.getElementById('speed-section').style.display = devMode ? 'block' : 'none';
+        document.getElementById('beep-hz').value = beepHz;
+        document.getElementById('beep-hz-label').textContent = Math.round(beepHz) + ' Hz';
+        document.getElementById('beep-vol').value = beepVol;
+        document.getElementById('beep-vol-label').textContent = Math.round(beepVol * 100) + '%';
+      } else {
+        rootNote = getRandomNote();
+      }
+    }
+
+    function getRandomNote() {
+      return NOTES[Math.floor(Math.random() * NOTES.length)];
+    }
+
+    // ═══════════════════════════════════════════
+    //  INIT
+    // ═══════════════════════════════════════════    // ═══════════════════════════════════════════
+    //  INIT
+    // ═══════════════════════════════════════════
+    loadSettings();
+    computeChord();
+    buildNoteGrid();
+    buildChordTypeSeg();
+    startGeo();
+  </script>
+
+</body>
+</html>
