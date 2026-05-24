@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>measure</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 0;
+            padding: 10px;
+        }
+
+        .speed-box {
+            background: #f9f9f9;
+            border: 2px solid #007bff;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .speed-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .speed-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #007bff;
+        }
+
+        .max-box {
+            background: #f9f9f9;
+            border: 2px solid #ff6b35;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 15px;
+        }
+
+        .max-label {
+            font-size: 11px;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .max-value {
+            font-size: 32px;
+            font-weight: bold;
+            color: #ff6b35;
+        }
+
+        .buttons {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 8px;
+        }
+
+        button {
+            flex: 1;
+            padding: 10px;
+            border: none;
+            border-radius: 6px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 13px;
+        }
+
+        .start-btn {
+            background: #28a745;
+            color: white;
+        }
+
+        .start-btn:disabled {
+            opacity: 0.5;
+        }
+
+        .stop-btn {
+            background: #dc3545;
+            color: white;
+        }
+
+        .stop-btn:disabled {
+            opacity: 0.5;
+        }
+
+        .reset-btn {
+            background: #6c757d;
+            color: white;
+            width: 100%;
+        }
+    </style>
+</head>
+<body>
+    <h1>speed tracker</h1>
+
+    <div class="speed-box">
+        <div class="speed-label">current speed</div>
+        <div class="speed-value" id="currentSpeed">0</div>
+    </div>
+
+    <div class="max-box">
+        <div class="max-label">peak speed</div>
+        <div class="max-value" id="maxSpeed">0</div>
+    </div>
+
+    <div class="buttons">
+        <button class="start-btn" id="startBtn">start</button>
+        <button class="stop-btn" id="stopBtn" disabled>stop</button>
+    </div>
+    <button class="reset-btn" id="resetBtn">reset</button>
+
+    <script>
+        const currentSpeedEl = document.getElementById('currentSpeed');
+        const maxSpeedEl = document.getElementById('maxSpeed');
+        const startBtn = document.getElementById('startBtn');
+        const stopBtn = document.getElementById('stopBtn');
+        const resetBtn = document.getElementById('resetBtn');
+
+        let maxSpeed = 0;
+        let watchId = null;
+
+        function metersPerSecToMph(mps) {
+            return (mps * 2.23694).toFixed(1);
+        }
+
+        startBtn.addEventListener('click', () => {
+            if (!navigator.geolocation) {
+                alert('GPS not supported');
+                return;
+            }
+
+            maxSpeed = 0;
+            maxSpeedEl.textContent = '0';
+            startBtn.disabled = true;
+            stopBtn.disabled = false;
+
+            watchId = navigator.geolocation.watchPosition(
+                (position) => {
+                    const speed = metersPerSecToMph(position.coords.speed || 0);
+                    currentSpeedEl.textContent = speed;
+
+                    if (parseFloat(speed) > maxSpeed) {
+                        maxSpeed = parseFloat(speed);
+                        maxSpeedEl.textContent = maxSpeed.toFixed(1);
+                    }
+                },
+                (error) => {
+                    alert('GPS error: ' + error.message);
+                },
+                {
+                    enableHighAccuracy: true,
+                    timeout: 10000,
+                    maximumAge: 0
+                }
+            );
+        });
+
+        stopBtn.addEventListener('click', () => {
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+
+        resetBtn.addEventListener('click', () => {
+            currentSpeedEl.textContent = '0';
+            maxSpeedEl.textContent = '0';
+            maxSpeed = 0;
+
+            if (watchId !== null) {
+                navigator.geolocation.clearWatch(watchId);
+                watchId = null;
+            }
+            startBtn.disabled = false;
+            stopBtn.disabled = true;
+        });
+    </script>
+</body>
+</html>
