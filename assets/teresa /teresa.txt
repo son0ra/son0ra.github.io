@@ -1,1 +1,5 @@
-
+tag: teresa
+title:welcome to teresa! (7/4/26)
+text:the database is looking pretty empty.. we will add something else soon, i dont know when! happy fourth of july btw
+bg=https://www.ontariosciencecentre.ca/media/2098/fireworksheader3.jpg
+-
