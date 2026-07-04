@@ -1,0 +1,1297 @@
+<!DOCTYPE html>
+<html lang="en" class="h-full dark transition-colors duration-200">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>teresa - story database viewer</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        sans: ['TikTok Sans', 'Inter', 'system-ui', '-apple-system', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Import TikTok Sans Font */
+        @import url('https://fonts.cdnfonts.com/css/tiktok-sans');
+
+        /* Clean custom scrollbars */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: transparent;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(244, 63, 94, 0.15); /* rose accent */
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(244, 63, 94, 0.3);
+        }
+
+        /* Custom Keyframe Animations */
+        @keyframes modalFadeIn {
+            from {
+                opacity: 0;
+                transform: scale(0.97) translateY(8px);
+            }
+            to {
+                opacity: 1;
+                transform: scale(1) translateY(0);
+            }
+        }
+
+        @keyframes cardEntrance {
+            from {
+                opacity: 0;
+                transform: translateY(12px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes audioWave {
+            0%, 100% { height: 4px; }
+            50% { height: 16px; }
+        }
+
+        @keyframes blinkSubtext {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+
+        .animate-modal-in {
+            animation: modalFadeIn 0.35s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-card-in {
+            animation: cardEntrance 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .wave-bar {
+            animation: audioWave 1.2s ease-in-out infinite;
+        }
+        .wave-bar:nth-child(2) { animation-delay: 0.2s; }
+        .wave-bar:nth-child(3) { animation-delay: 0.4s; }
+        .wave-bar:nth-child(4) { animation-delay: 0.6s; }
+
+        .animate-blink {
+            animation: blinkSubtext 2s ease-in-out infinite;
+        }
+    </style>
+</head>
+<body class="min-h-full bg-slate-950 bg-gradient-to-b from-rose-950/10 via-slate-950 to-slate-950 text-slate-300 flex flex-col font-light tracking-wide transition-colors duration-300">
+
+    <!-- Minimalist White Startup Screen Overlay -->
+    <div id="splash-screen" onclick="dismissSplash()" class="fixed inset-0 z-[100] bg-white flex flex-col items-center justify-center cursor-pointer transition-all duration-[800ms] ease-in-out select-none">
+        <div class="text-center space-y-3">
+            <h1 class="text-5xl md:text-6xl font-extralight tracking-[0.25em] text-black lowercase">teresa</h1>
+            <p class="text-xs md:text-sm font-light tracking-[0.15em] text-stone-400 lowercase animate-blink">click to continue</p>
+        </div>
+    </div>
+
+    <!-- Global Background Audio Element -->
+    <audio id="global-bgm-player" loop class="hidden"></audio>
+
+    <!-- Header Navigation -->
+    <header class="border-b border-slate-900 bg-slate-950/80 backdrop-blur-md px-4 sm:px-6 py-4 sticky top-0 z-10 shadow-sm transition-colors flex-shrink-0">
+        <div class="max-w-6xl mx-auto flex flex-col md:flex-row items-center justify-between gap-6 w-full">
+            
+            <!-- Prepared Logo & Brand Container -->
+            <div class="flex items-center justify-start w-full md:w-auto">
+                <!-- Logo Space set to exactly 50x50 with fluid layout constraints -->
+                <div class="w-[50px] h-[50px] overflow-hidden flex-shrink-0 flex items-center justify-center transition-transform duration-300 hover:scale-105">
+                    <img id="app-logo" src="https://github.com/1ucent/1ucent.github.io/blob/Lucent/brand/teresa-TRED.png?raw=true" alt="Teresa Logo" class="w-full h-full object-contain">
+                </div>
+            </div>
+            
+            <!-- Navigation Control & Settings Gear -->
+            <div class="flex items-center gap-2 sm:gap-3 w-full md:w-auto justify-end flex-shrink-0">
+                <!-- Main Reader Tab Button (Icon Only) -->
+                <button id="tab-reader" onclick="switchTab('reader')" class="w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 text-slate-955 shadow-md shadow-orange-500/10 hover:scale-105 transition-all duration-300 relative font-medium" title="reader grid">
+                    <i data-lucide="book-open" class="w-4.5 h-4.5"></i>
+                </button>
+                
+                <!-- Settings Tab Button (Icon is styled white when unselected) -->
+                <button id="tab-settings" onclick="switchTab('settings')" class="w-10 h-10 rounded-xl flex items-center justify-center text-white bg-slate-900 hover:bg-slate-800/70 hover:scale-105 transition-all duration-300 relative" title="app settings">
+                    <i data-lucide="settings" class="w-4.5 h-4.5"></i>
+                    <span id="settings-dot" class="absolute top-1 right-1 w-1.5 h-1.5 rounded-full bg-orange-500 hidden"></span>
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content Panel Area -->
+    <main class="flex-1 max-w-6xl w-full mx-auto px-4 py-6 md:py-8 flex flex-col min-h-0">
+        
+        <!-- ================= READER VIEW ================= -->
+        <section id="view-reader" class="space-y-6">
+            
+            <!-- Dynamic Search and Context Bar -->
+            <div id="search-bar-container" class="flex flex-col sm:flex-row items-center justify-between gap-4 bg-slate-900 p-4 rounded-2xl border border-slate-900 shadow-sm transition-all duration-300">
+                <div class="flex items-center gap-2">
+                    <i data-lucide="grid" class="w-4 h-4 text-orange-400"></i>
+                    <h2 class="font-light tracking-wider text-white lowercase">explore stories</h2>
+                    <span id="story-count" class="px-2 py-0.5 bg-slate-950 text-slate-400 text-xs font-light tracking-wider rounded-full lowercase">0 stories</span>
+                </div>
+                
+                <!-- Centered/Right aligned Search Bar -->
+                <div class="relative w-full sm:w-80">
+                    <input 
+                        type="text" 
+                        id="filter-input" 
+                        oninput="filterStories()" 
+                        placeholder="search titles or content..." 
+                        class="w-full pl-9 pr-3 py-2 bg-slate-955 border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-400/50 text-xs transition-all duration-300 text-slate-200 lowercase font-light"
+                    >
+                    <i data-lucide="search" class="absolute left-3 top-2.5 w-4 h-4 text-white"></i>
+                </div>
+            </div>
+
+            <!-- Dynamic Category selector tabs -->
+            <div id="category-selector-container" class="flex flex-wrap items-center gap-2 py-1 overflow-x-auto scrollbar-none">
+                <!-- Categories will be generated dynamically -->
+            </div>
+
+            <!-- Error State: Database Failed to Load (No longer blocks reading fallback) -->
+            <div id="failed-state" class="hidden flex-col items-center justify-center text-center py-20 px-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-sm animate-card-in">
+                <div class="p-4 bg-rose-950/20 rounded-full text-rose-500 mb-4 border border-dashed border-rose-900/40">
+                    <i data-lucide="alert-triangle" class="w-10 h-10"></i>
+                </div>
+                <h3 class="font-light text-white text-md lowercase">database failed to load</h3>
+                <p class="text-xs text-slate-400 max-w-sm mt-1 mb-6 lowercase font-light">
+                    unable to connect or retrieve the raw story files from the configured network database URL.
+                </p>
+                <button onclick="fetchFromUrl()" class="px-4 py-2 bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 hover:from-rose-400 hover:to-amber-300 text-slate-955 text-xs font-normal tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center gap-2 hover:scale-[1.02]">
+                    <i data-lucide="refresh-cw" class="w-3.5 h-3.5"></i> retry loading
+                </button>
+            </div>
+
+            <!-- Empty State -->
+            <div id="empty-state" class="hidden flex-col items-center justify-center text-center py-20 px-4 bg-slate-900 rounded-2xl border border-slate-800 shadow-sm animate-card-in">
+                <div class="p-4 bg-slate-950 rounded-full text-slate-500 mb-4 border border-dashed border-slate-800">
+                    <i data-lucide="book" class="w-10 h-10"></i>
+                </div>
+                <h3 class="font-light text-white text-md lowercase">no parsed database stories found</h3>
+                <p class="text-xs text-slate-400 max-w-sm mt-1 mb-6 lowercase font-light">
+                    your pasted database is empty. configure your data source in settings or insert custom workspace text data to populate the grid.
+                </p>
+                <button onclick="switchTab('settings')" class="px-4 py-2 bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 hover:from-rose-400 hover:to-amber-300 text-slate-955 text-xs font-normal tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center gap-2 hover:scale-[1.02]">
+                    <i data-lucide="sliders" class="w-3.5 h-3.5"></i> go to settings workspace
+                </button>
+            </div>
+
+            <!-- Main Stories Grid Container -->
+            <div id="grid-container" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5"></div>
+        </section>
+
+
+        <!-- ================= SETTINGS VIEW ================= -->
+        <section id="view-settings" class="hidden max-w-2xl mx-auto w-full space-y-6">
+            
+            <div class="flex items-center gap-2 mb-2">
+                <i data-lucide="sliders" class="w-4 h-4 text-orange-400"></i>
+                <h2 class="text-lg font-light tracking-widest text-white lowercase">settings console</h2>
+            </div>
+
+            <!-- Mode & Theme Controller Card -->
+            <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm space-y-6 transition-colors duration-350">
+                
+                <!-- Source Selector Toggle -->
+                <div class="space-y-3">
+                    <div>
+                        <h3 class="font-light text-white text-sm lowercase">database source mode</h3>
+                        <p class="text-[11px] text-slate-400 lowercase font-light">choose how teresa retrieves story items.</p>
+                    </div>
+                    
+                    <!-- Segmented Control Button Layout (White unselected text) -->
+                    <div class="grid grid-cols-2 p-1 bg-slate-955 rounded-xl gap-1">
+                        <button id="btn-source-url" onclick="switchSourceMode('url')" class="py-1.5 text-xs font-light rounded-lg transition-all duration-300 bg-slate-950 text-orange-400 shadow-sm lowercase border border-orange-500/10">
+                            remote url link
+                        </button>
+                        <button id="btn-source-paste" onclick="switchSourceMode('paste')" class="py-1.5 text-xs font-light rounded-lg transition-all duration-300 text-white hover:text-white lowercase">
+                            local paste workspace
+                        </button>
+                    </div>
+                </div>
+
+                <!-- DYNAMIC SOURCE PANEL: URL -->
+                <div id="panel-source-url" class="space-y-3 pt-2">
+                    <div class="space-y-1.5">
+                        <label class="text-xs font-light text-white block lowercase" for="db-link">
+                            raw database url
+                        </label>
+                        <!-- Textbox is pure black background under white label -->
+                        <div class="relative">
+                            <input 
+                                type="text" 
+                                id="db-link" 
+                                value="https://raw.githubusercontent.com/1ucent/1ucent.github.io/refs/heads/Lucent/assets/teresa/db.txt" 
+                                class="w-full pl-3 pr-10 py-2 bg-black border border-slate-800 rounded-xl focus:outline-none focus:ring-1 focus:ring-orange-400/50 text-xs transition-all lowercase font-light text-white"
+                            >
+                            <button onclick="clearUrl()" class="absolute right-3 top-2.5 text-white hover:text-orange-400">
+                                <i data-lucide="x" class="w-3.5 h-3.5"></i>
+                            </button>
+                        </div>
+                        <p class="text-[10px] text-slate-400 lowercase">
+                            * cors headers must be configured on your remote server to request directly.
+                        </p>
+                    </div>
+                    
+                    <button onclick="fetchFromUrl()" class="w-full py-2.5 bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 text-slate-955 font-normal text-xs tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.01]">
+                        <i data-lucide="download" class="w-4 h-4"></i> fetch and compile
+                    </button>
+                </div>
+
+                <!-- DYNAMIC SOURCE PANEL: PASTE -->
+                <div id="panel-source-paste" class="space-y-3 pt-2 hidden">
+                    <div class="space-y-1.5">
+                        <div class="flex items-center justify-between">
+                            <label class="text-xs font-light text-white lowercase" for="raw-data-paste">
+                                raw client database block
+                            </label>
+                            <div class="flex items-center gap-3">
+                                <button onclick="fetchToPasteWorkspace()" class="text-xs text-orange-400 hover:underline lowercase font-light">
+                                    fetch from url link
+                                </button>
+                            </div>
+                        </div>
+                        <!-- Workspace textarea is pure black background under white label -->
+                        <textarea 
+                            id="raw-data-paste" 
+                            rows="12" 
+                            placeholder="title: story name&#10;text: paragraph goes here..."
+                            class="w-full p-3 bg-black border border-slate-800 rounded-xl font-mono text-xs focus:outline-none focus:ring-1 focus:ring-orange-400/50 resize-y transition-all lowercase text-white"
+                        ></textarea>
+                    </div>
+
+                    <button onclick="parseFromPaste()" class="w-full py-2.5 bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 text-slate-955 font-normal text-xs tracking-wider rounded-xl shadow-md transition-all duration-300 flex items-center justify-center gap-2 hover:scale-[1.01]">
+                        <i data-lucide="play" class="w-4 h-4"></i> run client compiler
+                    </button>
+                </div>
+
+                <div id="status-box" class="hidden p-3 rounded-xl border text-xs tracking-wide"></div>
+            </div>
+
+            <!-- Parsing Specifications Card -->
+            <div class="bg-slate-900 p-6 rounded-2xl border border-slate-800 shadow-sm space-y-3.5 transition-colors">
+                <h3 class="font-light text-white flex items-center gap-2 text-sm lowercase">
+                    <i data-lucide="terminal" class="w-4 h-4 text-slate-400"></i>
+                    parsing rules index
+                </h3>
+                <!-- Rule description text is strictly white -->
+                <ul class="space-y-2.5 text-xs text-white lowercase">
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">title:</code>
+                        <span>adds a structured top heading/title to your entry card.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">tag=</code>
+                        <span>applies a metadata tag to group your story into dynamic filter categories.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">bg=</code>
+                        <span>adds a custom backdrop image URL to style the card and fullscreen reading space.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">pgbg=</code>
+                        <span>set as a standalone entry block to configure the application's wallpaper.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">bgm=</code>
+                        <span>adds background ambient music to play on a loop when maximizing the story.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">text:</code>
+                        <span>adds paragraph content. you can write multiple `text:` lines to stack paragraphs.</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">video:</code>
+                        <span>renders a responsive direct media player. (shown when maximizing).</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">videoe:</code>
+                        <span>creates an external link redirection button. (shown when maximizing).</span>
+                    </li>
+                    <li class="flex items-start gap-2">
+                        <code class="px-1.5 py-0.5 bg-slate-955 text-orange-450 rounded font-bold">-</code>
+                        <span>splits entries completely. separate each block using a single hyphen line.</span>
+                    </li>
+                </ul>
+            </div>
+        </section>
+    </main>
+
+    <!-- Fullscreen Immersive Story Overlay Reader -->
+    <div id="maximize-modal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-slate-900 flex flex-col transition-colors duration-300">
+        
+        <!-- Header (Sticky on top of reading pane) -->
+        <div class="px-4 sm:px-6 py-4 border-b border-slate-900 bg-slate-950/95 backdrop-blur-md flex items-center justify-between flex-shrink-0 shadow-sm sticky top-0 z-10 transition-colors">
+            <div class="flex items-center gap-3">
+                <button onclick="closeMaximizeModal()" class="p-2 rounded-xl text-slate-400 hover:text-white bg-slate-900 hover:bg-slate-800/50 transition-all duration-300 flex items-center justify-center hover:scale-105" title="back to grid">
+                    <i data-lucide="arrow-left" class="w-4 h-4"></i>
+                </button>
+                <div class="h-6 w-[1px] bg-slate-900"></div>
+                <div class="flex items-center gap-2">
+                    <span id="modal-badge-id" class="font-light bg-gradient-to-r from-rose-400/10 via-orange-400/10 to-amber-300/10 text-orange-400 px-2.5 py-0.5 rounded text-xs lowercase">entry #--</span>
+                    <span id="modal-badge-media" class="inline-flex items-center gap-1 text-xs text-slate-500 lowercase font-light font-light font-light"></span>
+                </div>
+            </div>
+
+            <!-- Contextual Audio Action Controller (BGM status and control) -->
+            <div id="modal-bgm-controller" class="hidden items-center gap-3 bg-slate-900/60 border border-slate-800/50 px-3.5 py-1.5 rounded-full backdrop-blur-sm transition-all duration-300">
+                <div class="flex items-center gap-1 h-4 w-6 px-1 justify-center">
+                    <span class="wave-bar w-[2px] bg-gradient-to-t from-rose-400 to-orange-400 rounded-full"></span>
+                    <span class="wave-bar w-[2px] bg-gradient-to-t from-rose-400 to-orange-400 rounded-full"></span>
+                    <span class="wave-bar w-[2px] bg-gradient-to-t from-orange-400 to-amber-400 rounded-full"></span>
+                    <span class="wave-bar w-[2px] bg-gradient-to-t from-orange-400 to-amber-400 rounded-full"></span>
+                </div>
+                <span class="text-[11px] text-slate-450 tracking-wider lowercase">ambient bgm</span>
+                <button id="modal-bgm-toggle" onclick="toggleBgmPlay()" class="p-1 rounded-full bg-slate-800 hover:bg-slate-700 transition-colors flex items-center justify-center">
+                    <i data-lucide="volume-2" class="w-3.5 h-3.5 text-orange-400"></i>
+                </button>
+            </div>
+            
+            <button onclick="closeMaximizeModal()" class="p-2 rounded-xl text-slate-400 hover:text-white hover:bg-slate-900 transition-all duration-300 hover:scale-105">
+                <i data-lucide="x" class="w-4.5 h-4.5"></i>
+            </button>
+        </div>
+
+        <!-- Sticky Sleek Progress bar Indicator for reading progress -->
+        <div class="h-1 bg-slate-900 w-full sticky top-[64px] z-10">
+            <div id="modal-reading-progress" class="h-full bg-gradient-to-r from-rose-400 via-orange-400 to-amber-300 w-0 transition-all duration-150"></div>
+        </div>
+
+        <!-- Scrollable Immersive Body Content Area (Strict reading bounds) -->
+        <div id="modal-scroll-viewport" class="flex-1 overflow-y-auto px-4 py-8 md:py-16 relative">
+            <!-- Floating Jump to Bookmark indicator button (appears if bookmark loaded) -->
+            <button id="floating-bookmark-btn" onclick="jumpToBookmarkedElement()" class="hidden fixed bottom-24 right-6 px-4 py-2.5 bg-gradient-to-r from-rose-500/90 to-orange-500/90 hover:from-rose-500 hover:to-orange-500 text-slate-955 text-xs font-semibold rounded-xl shadow-lg shadow-orange-500/10 items-center gap-2 hover:scale-105 active:scale-95 transition-all z-40 animate-bounce">
+                <i data-lucide="bookmark" class="w-4 h-4"></i>
+                jump to bookmark
+            </button>
+
+            <div class="max-w-2xl mx-auto space-y-8 opacity-0" id="modal-body-content"></div>
+        </div>
+
+        <!-- Footer Escape Controls -->
+        <div class="px-6 py-4 border-t border-slate-900 bg-slate-950 flex justify-between items-center flex-shrink-0">
+            <span id="reading-percentage-label" class="text-xs text-slate-500 lowercase font-light tracking-widest">0% read</span>
+            <button onclick="finishReadingStory()" class="px-5 py-2 bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 hover:from-rose-400 hover:to-amber-300 text-slate-955 text-xs font-normal tracking-wider rounded-xl shadow-lg shadow-orange-500/10 transition-all duration-300 flex items-center gap-2 hover:scale-[1.02]">
+                <i data-lucide="check-circle-2" class="w-4 h-4"></i>
+                done reading
+            </button>
+        </div>
+    </div>
+
+    <!-- Right-click Custom Context Menu for Paragraph Bookmarking -->
+    <div id="custom-context-menu" class="hidden fixed bg-slate-900/95 backdrop-blur border border-slate-800 rounded-xl shadow-2xl py-1 z-[60] w-48 text-left transition-all duration-150">
+        <button onclick="bookmarkSelectedParagraph()" class="w-full px-4 py-2 hover:bg-slate-800 text-xs font-light tracking-wide text-slate-350 hover:text-white flex items-center gap-2 transition-all">
+            <i data-lucide="bookmark" class="w-4 h-4 text-orange-400"></i>
+            bookmark this part
+        </button>
+    </div>
+
+    <!-- Congrats Finished Reading Dialog Modal -->
+    <div id="congrats-modal" class="hidden fixed inset-0 z-[70] bg-slate-955/80 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-slate-800 max-w-sm w-full rounded-2xl p-6 text-center space-y-4 shadow-2xl animate-modal-in">
+            <div class="inline-flex p-4 bg-gradient-to-tr from-rose-500/20 via-orange-500/20 to-amber-300/20 rounded-full border border-orange-500/25">
+                <i data-lucide="party-popper" class="w-8 h-8 text-orange-400"></i>
+            </div>
+            <h3 class="text-lg font-light text-white tracking-widest lowercase">completed!</h3>
+            <p class="text-xs text-slate-400 font-light leading-relaxed lowercase">
+                congratulations, you finished reading "<span id="congrats-story-title" class="font-normal text-slate-200"></span>"! progress saved.
+            </p>
+            <button onclick="closeCongratsModal()" class="w-full py-2 bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 text-slate-955 text-xs font-normal rounded-xl transition-all duration-300 hover:scale-105 active:scale-95">
+                awesome
+            </button>
+        </div>
+    </div>
+
+    <!-- Firebase SDK Imports -->
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-app-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-auth-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore-compat.js"></script>
+
+    <script>
+        // Active Application States
+        let loadedStories = []; // Active in-memory parsed dataset
+        let isBgmPlaying = false; // State of global player
+        let currentCategory = 'all'; // State of active category filter
+
+        // Active State parameters to save in database/storage
+        let activeStoryId = null;
+        let rightClickedElementIndex = null;
+        let rightClickedParagraph = null;
+
+        // saved browser/cloud database storage structure
+        let userBgmBookmarks = {}; // { storyId: paragraphIndex }
+        let userCompletedStories = []; // [storyIds...]
+
+        // Fallback offline/local backup test stories (cleaned of Unsplash queries!)
+        const demoContent = `pgbg=https://images.unsplash.com/photo-1579546929518-9e396f3cc809
+-
+title: deep space echoes
+tag: space
+bg=https://images.unsplash.com/photo-1451187580459-43490279c0fa
+bgm=https://www.soundhelix.com/examples/mp3/SoundHelix-Song-1.mp3
+text: our telescopes have recorded a pattern of signals coming from the orion arm.
+text: researchers believe this is a naturally occurring acoustic vibration from a magnetar star.
+video: https://assets.mixkit.co/videos/preview/mixkit-forest-stream-in-the-sunlight-529-large.mp4
+-
+title: celestial whiteout (light background test)
+tag: nature
+bg=https://images.unsplash.com/photo-1548263541-d5be892d330a
+bgm=https://www.soundhelix.com/examples/mp3/SoundHelix-Song-2.mp3
+text: this is a light background card. teresa's advanced parser dynamically detects the background luminance and shifts the text style to black for optimal readability.
+-
+title: oceanic trench chronicles
+tag: nature
+bg=https://images.unsplash.com/photo-1583212292454-1fe6229603b7
+text: explorers descending into the mariana trench have discovered an unknown geothermal vent system.
+text: the vents are rich in unique lifeforms that depend completely on chemical synthesis rather than sunlight.
+videoe: https://youtube.com
+-
+title: midnight library logs
+tag: records
+text: archived records of classical literature are being converted to neural preservation databases.
+text: this has no custom background image, so the card container defaults to pitch-black.`;
+
+        // ==========================================
+        //  FIRESTORE & AUTH PROTOCOL ENGINE
+        // ==========================================
+        let db = null;
+        let auth = null;
+        let currentUser = null;
+        const appId = typeof __app_id !== 'undefined' ? __app_id : 'teresa-default-app';
+
+        function initFirebase() {
+            try {
+                if (typeof __firebase_config !== 'undefined' && __firebase_config) {
+                    const firebaseConfig = JSON.parse(__firebase_config);
+                    firebase.initializeApp(firebaseConfig);
+                    auth = firebase.auth();
+                    db = firebase.firestore();
+
+                    const initAuth = async () => {
+                        if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
+                            await auth.signInWithCustomToken(__initial_auth_token);
+                        } else {
+                            await auth.signInAnonymously();
+                        }
+                    };
+
+                    initAuth();
+                    auth.onAuthStateChanged((user) => {
+                        currentUser = user;
+                        if (user) {
+                            loadProgressFromFirestore();
+                        }
+                    });
+                } else {
+                    loadProgressFromLocalStorage();
+                }
+            } catch (e) {
+                console.warn("firebase config failed. running local storage engine.", e);
+                loadProgressFromLocalStorage();
+            }
+        }
+
+        // load progress data dynamically (adheres to Rule 1 & Rule 3)
+        async function loadProgressFromFirestore() {
+            if (!currentUser || !db) return;
+            try {
+                const userDocRef = db.doc(`artifacts/${appId}/users/${currentUser.uid}/progress/state`);
+                const docSnap = await userDocRef.get();
+                if (docSnap.exists) {
+                    const data = docSnap.data();
+                    userBgmBookmarks = data.bookmarks || {};
+                    userCompletedStories = data.completed || [];
+                }
+                renderGrid(loadedStories); // re-render grid to show finished indicators
+            } catch (e) {
+                console.warn("error fetching from firestore. fallback loading.", e);
+            }
+        }
+
+        // save state helper (adheres to Rule 1 & Rule 3)
+        async function saveProgressState() {
+            if (currentUser && db) {
+                try {
+                    const userDocRef = db.doc(`artifacts/${appId}/users/${currentUser.uid}/progress/state`);
+                    await userDocRef.set({
+                        bookmarks: userBgmBookmarks,
+                        completed: userCompletedStories
+                    });
+                } catch (e) {
+                    console.error("failed saving to firestore", e);
+                }
+            } else {
+                saveProgressToLocalStorage();
+            }
+            renderGrid(loadedStories);
+        }
+
+        // Local Storage Browser fallbacks when cloud config isn't populated
+        function loadProgressFromLocalStorage() {
+            try {
+                const localData = localStorage.getItem('teresa_progress_state');
+                if (localData) {
+                    const parsed = JSON.parse(localData);
+                    userBgmBookmarks = parsed.bookmarks || {};
+                    userCompletedStories = parsed.completed || [];
+                }
+            } catch (e) {
+                console.warn("local storage not accessible", e);
+            }
+        }
+
+        function saveProgressToLocalStorage() {
+            try {
+                const stateToSave = {
+                    bookmarks: userBgmBookmarks,
+                    completed: userCompletedStories
+                };
+                localStorage.setItem('teresa_progress_state', JSON.stringify(stateToSave));
+            } catch (e) {
+                console.warn("could not write to local storage", e);
+            }
+        }
+
+        // Smart image width optimization function
+        function optimizeImageUrl(url, targetWidth) {
+            if (!url) return '';
+            try {
+                // If it's an unsplash URL, strip existing query parameters and apply the requested target width
+                if (url.includes('images.unsplash.com')) {
+                    const baseUrl = url.split('?')[0];
+                    return `${baseUrl}?w=${targetWidth}&auto=format&fit=crop&q=65`;
+                }
+            } catch (e) {
+                console.warn("could not optimize url", e);
+            }
+            return url; // fallback to raw string
+        }
+
+        // Image Brightness Analyzer to determine Light vs Dark (loads small optimized URL for performance)
+        function analyzeImageLuminance(imageUrl, callback) {
+            const optimizedSmallUrl = optimizeImageUrl(imageUrl, 15);
+            const img = new Image();
+            img.crossOrigin = "Anonymous"; // attempt to load canvas pixels under standard CORS
+            img.onload = function() {
+                try {
+                    const canvas = document.createElement('canvas');
+                    canvas.width = 10;
+                    canvas.height = 10;
+                    const ctx = canvas.getContext('2d');
+                    ctx.drawImage(img, 0, 0, 10, 10);
+                    const imgData = ctx.getImageData(0, 0, 10, 10);
+                    let rSum = 0, gSum = 0, bSum = 0;
+                    for (let i = 0; i < imgData.data.length; i += 4) {
+                        rSum += imgData.data[i];
+                        gSum += imgData.data[i + 1];
+                        bSum += imgData.data[i + 2];
+                    }
+                    const totalPixels = imgData.data.length / 4;
+                    const rAvg = rSum / totalPixels;
+                    const gAvg = gSum / totalPixels;
+                    const bAvg = bSum / totalPixels;
+                    // Standard luminance formula
+                    const luminance = 0.2126 * rAvg + 0.7152 * gAvg + 0.0722 * bAvg;
+                    callback(luminance > 140 ? 'light' : 'dark');
+                } catch (e) {
+                    callback('dark'); // Safe default
+                }
+            };
+            img.onerror = function() {
+                callback('dark'); // Safe default on fetch error
+            };
+            img.src = optimizedSmallUrl;
+        }
+
+        // Apply Global Page Background helper (appends optimized large size width parameters)
+        function applyPageBackground(url) {
+            if (url) {
+                const optimizedBgUrl = optimizeImageUrl(url, 1200);
+                document.body.style.backgroundImage = `linear-gradient(to bottom, rgba(12, 10, 20, 0.88), rgba(2, 6, 23, 0.95)), url('${optimizedBgUrl}')`;
+                document.body.style.backgroundSize = "cover";
+                document.body.style.backgroundPosition = "center";
+                document.body.style.backgroundAttachment = "fixed";
+            } else {
+                document.body.style.backgroundImage = "";
+                document.body.style.backgroundAttachment = "";
+            }
+        }
+
+        // Dismiss the splash screen and start parsing/loading the app database
+        function dismissSplash() {
+            const splash = document.getElementById('splash-screen');
+            if (!splash) return;
+
+            // Fade out the startup screen
+            splash.classList.add('opacity-0', 'pointer-events-none');
+
+            // Trigger actual network operations and compilation
+            fetchFromUrl();
+
+            // Completely clean up the element from the DOM after the animation completes
+            setTimeout(() => {
+                splash.remove();
+            }, 800);
+        }
+
+        // Initialize App on DOM Content loaded
+        window.addEventListener('DOMContentLoaded', async () => {
+            // First initialize setup defaults (will wait for splash screen click to parse)
+            switchSourceMode('url');
+            lucide.createIcons();
+            initFirebase();
+
+            // Pre-fill local paste workspace text area with our standard template
+            document.getElementById('raw-data-paste').value = demoContent.trim();
+
+            // Set up scroll reading progress listeners
+            const viewport = document.getElementById('modal-scroll-viewport');
+            viewport.addEventListener('scroll', updateReadingProgress);
+
+            // Close context menu on any global document clicks
+            window.addEventListener('click', () => {
+                const menu = document.getElementById('custom-context-menu');
+                menu.classList.add('hidden');
+            });
+        });
+
+        // Tabs Swapper (Unselected Tab Button icon is styled white and proper fixed dimensions applied)
+        function switchTab(tabId) {
+            const tabReader = document.getElementById('tab-reader');
+            const tabSettings = document.getElementById('tab-settings');
+            const viewReader = document.getElementById('view-reader');
+            const viewSettings = document.getElementById('view-settings');
+            const settingsDot = document.getElementById('settings-dot');
+
+            if (tabId === 'reader') {
+                tabReader.className = "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 text-slate-955 shadow-md shadow-orange-500/10 hover:scale-105 transition-all duration-300 relative font-medium";
+                tabSettings.className = "w-10 h-10 rounded-xl flex items-center justify-center text-white bg-slate-900 hover:bg-slate-800/70 hover:scale-105 transition-all duration-300 relative";
+                
+                viewReader.classList.remove('hidden');
+                viewSettings.classList.add('hidden');
+                // Re-trigger visual story animations
+                const cards = document.querySelectorAll('#grid-container > div');
+                cards.forEach((card, index) => {
+                    card.style.animationDelay = `${index * 50}ms`;
+                    card.classList.remove('animate-card-in');
+                    void card.offsetWidth; // Force reflow
+                    card.classList.add('animate-card-in');
+                });
+            } else {
+                tabSettings.className = "w-10 h-10 rounded-xl flex items-center justify-center bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 text-slate-950 shadow-md shadow-orange-500/10 hover:scale-105 transition-all duration-300 relative font-medium";
+                tabReader.className = "w-10 h-10 rounded-xl flex items-center justify-center text-white bg-slate-900 hover:bg-slate-800/70 transition-all duration-300 relative";
+                
+                viewReader.classList.add('hidden');
+                viewSettings.classList.remove('hidden');
+                settingsDot.classList.add('hidden'); // Clear alert dot once visited
+            }
+            lucide.createIcons();
+        }
+
+        // Source Mode Toggle (Unselected state uses white typography)
+        function switchSourceMode(mode) {
+            const btnUrl = document.getElementById('btn-source-url');
+            const btnPaste = document.getElementById('btn-source-paste');
+            const panelUrl = document.getElementById('panel-source-url');
+            const panelPaste = document.getElementById('panel-source-paste');
+
+            if (mode === 'url') {
+                btnUrl.className = "py-1.5 text-xs font-light rounded-lg transition-all duration-300 bg-slate-900 text-orange-400 shadow-sm lowercase border border-orange-500/10";
+                btnPaste.className = "py-1.5 text-xs font-light rounded-lg transition-all duration-300 text-white hover:text-white lowercase";
+                
+                panelUrl.classList.remove('hidden');
+                panelPaste.classList.add('hidden');
+            } else {
+                btnPaste.className = "py-1.5 text-xs font-light rounded-lg transition-all duration-300 bg-slate-900 text-orange-400 shadow-sm lowercase border border-orange-500/10";
+                btnUrl.className = "py-1.5 text-xs font-light rounded-lg transition-all duration-300 text-white hover:text-white lowercase";
+                
+                panelPaste.classList.remove('hidden');
+                panelUrl.classList.add('hidden');
+            }
+        }
+
+        // Parser Engine
+        function parseStories(text) {
+            // Clean CRLF (Windows carriage returns) to ensure regex split consistency
+            const cleanText = text.replace(/\r\n/g, '\n').replace(/\r/g, '\n');
+
+            const emptyState = document.getElementById('empty-state');
+            const countBadge = document.getElementById('story-count');
+            const failedState = document.getElementById('failed-state');
+            const gridContainer = document.getElementById('grid-container');
+            const searchBarContainer = document.getElementById('search-bar-container');
+            
+            // Split raw data using standard '-' delimiters
+            const rawBlocks = cleanText.split(/\n\s*-\s*\n|\n-$/m);
+            
+            loadedStories = [];
+            let indexId = 1;
+            let globalPageBg = "";
+
+            rawBlocks.forEach(block => {
+                const trimmedBlock = block.trim();
+                if (!trimmedBlock) return;
+
+                // Create a clean item structure
+                const story = {
+                    id: indexId,
+                    title: "",
+                    bg: "",
+                    bgm: "",
+                    pgbg: "",
+                    tag: "",
+                    texts: [],
+                    videos: [],
+                    externalVideos: []
+                };
+
+                const lines = trimmedBlock.split('\n');
+                lines.forEach(line => {
+                    const trimmedLine = line.trim();
+                    
+                    if (trimmedLine.startsWith('title:')) {
+                        const content = trimmedLine.substring(6).trim();
+                        if (content) story.title = content.toLowerCase();
+                    } else if (trimmedLine.startsWith('bg=')) {
+                        const content = trimmedLine.substring(3).trim();
+                        if (content) story.bg = content;
+                    } else if (trimmedLine.startsWith('bg:')) {
+                        const content = trimmedLine.substring(3).trim();
+                        if (content) story.bg = content;
+                    } else if (trimmedLine.startsWith('tag=')) {
+                        const content = trimmedLine.substring(4).trim();
+                        if (content) story.tag = content.toLowerCase();
+                    } else if (trimmedLine.startsWith('tag:')) {
+                        const content = trimmedLine.substring(4).trim();
+                        if (content) story.tag = content.toLowerCase();
+                    } else if (trimmedLine.startsWith('bgm=')) {
+                        const content = trimmedLine.substring(4).trim();
+                        if (content) story.bgm = content;
+                    } else if (trimmedLine.startsWith('bgm:')) {
+                        const content = trimmedLine.substring(4).trim();
+                        if (content) story.bgm = content;
+                    } else if (trimmedLine.startsWith('pgbg=')) {
+                        const content = trimmedLine.substring(5).trim();
+                        if (content) story.pgbg = content;
+                    } else if (trimmedLine.startsWith('pgbg:')) {
+                        const content = trimmedLine.substring(5).trim();
+                        if (content) story.pgbg = content;
+                    } else if (trimmedLine.startsWith('text:')) {
+                        const content = trimmedLine.substring(5).trim();
+                        if (content) story.texts.push(content.toLowerCase());
+                    } else if (trimmedLine.startsWith('video:')) {
+                        const content = trimmedLine.substring(6).trim();
+                        if (content) story.videos.push(content);
+                    } else if (trimmedLine.startsWith('videoe:')) {
+                        const content = trimmedLine.substring(7).trim();
+                        if (content) story.externalVideos.push(content);
+                    }
+                });
+
+                // Check if this block is exclusively a pgbg command (to avoid empty rendered card)
+                if (story.pgbg) {
+                    globalPageBg = story.pgbg;
+                    if (!story.title && story.texts.length === 0 && story.videos.length === 0 && story.externalVideos.length === 0) {
+                        // Exclude standalone config block from main grid view array
+                        return;
+                    }
+                }
+
+                if (story.title || story.bg || story.bgm || story.texts.length > 0 || story.videos.length > 0 || story.externalVideos.length > 0) {
+                    story.id = indexId++;
+                    loadedStories.push(story);
+                }
+            });
+
+            // Set Global background if found
+            applyPageBackground(globalPageBg);
+
+            // Hide failure interface if compile happens
+            failedState.classList.add('hidden');
+            searchBarContainer.classList.remove('hidden');
+
+            // Update UI count indicators
+            if (loadedStories.length === 0) {
+                emptyState.classList.remove('hidden');
+                gridContainer.classList.add('hidden');
+                countBadge.innerText = "0 stories";
+                document.getElementById('grid-container').innerHTML = '';
+                document.getElementById('category-selector-container').innerHTML = '';
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            gridContainer.classList.remove('hidden');
+            countBadge.innerText = `${loadedStories.length} ${loadedStories.length === 1 ? 'story' : 'stories'}`;
+
+            // Build dynamic Category Selection layout
+            currentCategory = 'all'; 
+            buildCategorySelector();
+
+            // Build our custom text-only reader grid
+            renderGrid(loadedStories);
+        }
+
+        // Dynamically compile category navigation tabs from loaded dataset (Unselected is White text)
+        function buildCategorySelector() {
+            const container = document.getElementById('category-selector-container');
+            container.innerHTML = '';
+
+            // Scan and map unique tags
+            const tagsSet = new Set();
+            loadedStories.forEach(story => {
+                if (story.tag) {
+                    tagsSet.add(story.tag);
+                }
+            });
+
+            const uniqueTags = ['all', ...Array.from(tagsSet).sort()];
+
+            uniqueTags.forEach(tag => {
+                const btn = document.createElement('button');
+                btn.id = `tag-btn-${tag}`;
+                btn.onclick = () => selectCategory(tag);
+                btn.innerText = tag;
+                
+                if (tag === currentCategory) {
+                    btn.className = "px-4 py-1.5 rounded-xl text-xs font-normal bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 text-slate-955 shadow-md shadow-orange-500/10 transition-all duration-300 hover:scale-105";
+                } else {
+                    btn.className = "px-4 py-1.5 rounded-xl text-xs font-light bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 transition-all duration-300 hover:scale-105";
+                }
+
+                container.appendChild(btn);
+            });
+        }
+
+        // Category switching handler
+        function selectCategory(tag) {
+            currentCategory = tag;
+            
+            // Re-render button visual states with white unselected text
+            const buttons = document.querySelectorAll('#category-selector-container button');
+            buttons.forEach(btn => {
+                if (btn.id === `tag-btn-${tag}`) {
+                    btn.className = "px-4 py-1.5 rounded-xl text-xs font-normal bg-gradient-to-r from-rose-400/90 via-orange-400/90 to-amber-300/90 text-slate-955 shadow-md shadow-orange-500/10 transition-all duration-300 hover:scale-105";
+                } else {
+                    btn.className = "px-4 py-1.5 rounded-xl text-xs font-light bg-slate-900 hover:bg-slate-800 text-white border border-slate-900 transition-all duration-300 hover:scale-105";
+                }
+            });
+
+            // Filter Stories Grid
+            filterStories();
+        }
+
+        // Render Stories Grid (Text-Only, Clicking launches Fullscreen View)
+        function renderGrid(stories) {
+            const container = document.getElementById('grid-container');
+            container.innerHTML = '';
+
+            stories.forEach((story, idx) => {
+                const displayTitle = story.title || `story #${story.id}`;
+                const textPreview = story.texts.join('\n\n') || "(no text content attached)";
+
+                const card = document.createElement('div');
+                card.id = `card-${story.id}`;
+                
+                // Configure specific background image style if bg parameter is provided
+                let cardStyleAttribute = 'background-color: #000000;'; // fallback to deep pure black
+                let cardBaseClass = 'animate-card-in border border-slate-900 rounded-2xl p-5 hover:border-orange-500/40 hover:shadow-lg hover:shadow-orange-500/5 cursor-pointer transition-all duration-300 flex flex-col justify-between h-56 group relative overflow-hidden hover:scale-[1.02] hover:-translate-y-1';
+                
+                if (story.bg) {
+                    const optimizedCardBg = optimizeImageUrl(story.bg, 800);
+                    cardStyleAttribute = `background-image: linear-gradient(to bottom, rgba(2, 6, 23, 0.72), rgba(2, 6, 23, 0.94)), url('${optimizedCardBg}'); background-size: cover; background-position: center;`;
+                }
+
+                card.className = cardBaseClass;
+                card.setAttribute('style', cardStyleAttribute);
+                card.style.animationDelay = `${idx * 45}ms`;
+                card.setAttribute('data-id', story.id);
+                card.onclick = () => maximizeStory(story.id);
+
+                // Add music icon indicator to card top right if bgm is present
+                const musicBadge = story.bgm ? `<span class="inline-flex items-center justify-center p-1 rounded-full bg-orange-955/40 text-orange-400 border border-orange-500/25" title="has bgm"><i data-lucide="music" class="w-3 h-3"></i></span>` : '';
+
+                // Add "read" status indicator on grid card if completed previously
+                const isCompleted = userCompletedStories.includes(String(story.id));
+                const completedBadge = isCompleted ? `
+                    <span class="inline-flex items-center gap-1 text-[10px] px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/25">
+                        <i data-lucide="check" class="w-3.5 h-3.5"></i> finished
+                    </span>
+                ` : '';
+
+                card.innerHTML = `
+                    <div class="space-y-2 overflow-hidden flex-1 flex flex-col">
+                        <div class="flex items-center justify-between text-[11px] text-slate-505 lowercase font-light">
+                            <span class="badge-id font-light bg-slate-900 px-2 py-0.5 rounded text-slate-400">#${story.id}</span>
+                            <div class="flex items-center gap-1.5">
+                                ${completedBadge}
+                                ${musicBadge}
+                                <span class="badge-count flex items-center gap-1 font-light"><i data-lucide="align-left" class="w-3 h-3 text-orange-400/80"></i> ${story.texts.length} paragraphs</span>
+                            </div>
+                        </div>
+                        <h3 class="card-title font-light text-slate-100 text-base truncate group-hover:text-orange-400 transition-colors lowercase tracking-wide">${displayTitle}</h3>
+                        <p class="card-desc text-xs text-white/80 line-clamp-4 leading-relaxed flex-1 font-light lowercase mt-1">${textPreview}</p>
+                    </div>
+                    
+                    <div class="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                        <div class="p-1.5 rounded-lg bg-orange-950/20 text-orange-400 border border-orange-500/20">
+                            <i data-lucide="maximize-2" class="w-3.5 h-3.5"></i>
+                        </div>
+                    </div>
+                `;
+
+                container.appendChild(card);
+
+                // Run dynamic brightness/contrast evaluation if card has background
+                if (story.bg) {
+                    analyzeImageLuminance(story.bg, (theme) => {
+                        const targetCard = document.getElementById(`card-${story.id}`);
+                        if (targetCard && theme === 'light') {
+                            const optimizedCardLightBg = optimizeImageUrl(story.bg, 800);
+                            // Adjust gradient overlay to protect card details and allow light contrast to shine
+                            targetCard.style.backgroundImage = `linear-gradient(to bottom, rgba(255, 255, 255, 0.72), rgba(255, 255, 255, 0.92)), url('${optimizedCardLightBg}')`;
+                            
+                            // Transform text colors dynamically to black
+                            const title = targetCard.querySelector('.card-title');
+                            if (title) {
+                                title.classList.remove('text-slate-100', 'group-hover:text-orange-400');
+                                title.classList.add('text-slate-955', 'font-medium', 'group-hover:text-slate-800');
+                            }
+                            
+                            const desc = targetCard.querySelector('.card-desc');
+                            if (desc) {
+                                desc.classList.remove('text-white/80');
+                                desc.classList.add('text-slate-850', 'font-normal');
+                            }
+
+                            const badgeId = targetCard.querySelector('.badge-id');
+                            if (badgeId) {
+                                badgeId.classList.remove('bg-slate-900', 'text-slate-400');
+                                badgeId.classList.add('bg-slate-200', 'text-slate-800', 'font-medium');
+                            }
+
+                            const badgeCount = targetCard.querySelector('.badge-count');
+                            if (badgeCount) {
+                                badgeCount.classList.remove('text-slate-500');
+                                badgeCount.classList.add('text-slate-700', 'font-medium');
+                            }
+                        }
+                    });
+                }
+            });
+
+            lucide.createIcons();
+        }
+
+        // Search and Category Combined Filtering Engine
+        function filterStories() {
+            const query = document.getElementById('filter-input').value.toLowerCase().trim();
+            let visibleCount = 0;
+            
+            loadedStories.forEach(story => {
+                const card = document.querySelector(`#grid-container [data-id="${story.id}"]`);
+                if (!card) return;
+
+                // Match against text query criteria
+                const matchesSearch = !query || 
+                                     (story.title && story.title.toLowerCase().includes(query)) ||
+                                     story.texts.some(t => t.toLowerCase().includes(query));
+
+                // Match against category criteria
+                const matchesCategory = currentCategory === 'all' || story.tag === currentCategory;
+
+                if (matchesSearch && matchesCategory) {
+                    card.classList.remove('hidden');
+                    visibleCount++;
+                } else {
+                    card.classList.add('hidden');
+                }
+            });
+
+            // Update visible story count dynamic badge
+            const countBadge = document.getElementById('story-count');
+            countBadge.innerText = `${visibleCount} ${visibleCount === 1 ? 'story' : 'stories'}`;
+        }
+
+        // Background music play toggle helper
+        function toggleBgmPlay() {
+            const bgmPlayer = document.getElementById('global-bgm-player');
+            const toggleButton = document.getElementById('modal-bgm-toggle');
+            const waveBars = document.querySelectorAll('.wave-bar');
+
+            if (isBgmPlaying) {
+                bgmPlayer.pause();
+                isBgmPlaying = false;
+                toggleButton.innerHTML = `<i data-lucide="volume-x" class="w-3.5 h-3.5 text-white"></i>`;
+                waveBars.forEach(bar => {
+                    bar.style.animationPlayState = 'paused';
+                });
+            } else {
+                bgmPlayer.play().then(() => {
+                    isBgmPlaying = true;
+                    toggleButton.innerHTML = `<i data-lucide="volume-2" class="w-3.5 h-3.5 text-orange-400"></i>`;
+                    waveBars.forEach(bar => {
+                        bar.style.animationPlayState = 'running';
+                    });
+                }).catch(err => {
+                    console.warn("browser autoplay policy restricted bgm. interact with client to unmute.", err);
+                });
+            }
+            lucide.createIcons();
+        }
+
+        // Dynamic reading progress tracker calculation
+        function updateReadingProgress() {
+            const viewport = document.getElementById('modal-scroll-viewport');
+            const progressBar = document.getElementById('modal-reading-progress');
+            const percentageLabel = document.getElementById('reading-percentage-label');
+
+            const totalScrollableHeight = viewport.scrollHeight - viewport.clientHeight;
+            if (totalScrollableHeight <= 0) {
+                progressBar.style.width = '100%';
+                percentageLabel.innerText = '100% read';
+                return;
+            }
+
+            const currentScrollPercentage = Math.min(100, Math.max(0, Math.round((viewport.scrollTop / totalScrollableHeight) * 100)));
+            progressBar.style.width = `${currentScrollPercentage}%`;
+            percentageLabel.innerText = `${currentScrollPercentage}% read`;
+        }
+
+        // Custom Right Click Context Menu Handler for Bookmarks
+        function attachRightClickHandlers() {
+            const paragraphs = document.querySelectorAll('.story-paragraph');
+            const menu = document.getElementById('custom-context-menu');
+
+            paragraphs.forEach((p, index) => {
+                p.addEventListener('contextmenu', (e) => {
+                    e.preventDefault();
+                    rightClickedElementIndex = index;
+                    rightClickedParagraph = p;
+
+                    // Display custom menu directly at mouse coordinates
+                    menu.style.left = `${e.clientX}px`;
+                    menu.style.top = `${e.clientY}px`;
+                    menu.classList.remove('hidden');
+                });
+            });
+        }
+
+        // Bookmark action trigger
+        function bookmarkSelectedParagraph() {
+            if (rightClickedElementIndex === null || activeStoryId === null) return;
+
+            // Save the paragraph index as the bookmarked spot for this story
+            userBgmBookmarks[String(activeStoryId)] = rightClickedElementIndex;
+            saveProgressState();
+
+            // Clear previous highlight styles on other paragraphs
+            document.querySelectorAll('.story-paragraph').forEach(p => {
+                p.classList.remove('border-l-4', 'border-orange-500/80', 'pl-4', 'bg-orange-500/5', 'font-normal');
+            });
+
+            // Highlight newly bookmarked element
+            if (rightClickedParagraph) {
+                rightClickedParagraph.classList.add('border-l-4', 'border-orange-500/80', 'pl-4', 'bg-orange-500/5', 'font-normal');
+            }
+
+            // Expose the floating jump anchor button
+            const jumpBtn = document.getElementById('floating-bookmark-btn');
+            jumpBtn.classList.remove('hidden');
+            jumpBtn.classList.add('flex');
+
+            showStatus('bookmark saved! right click text to update bookmarks.', 'success');
+        }
+
+        // Smooth jump to bookmark spot inside reader modal
+        function jumpToBookmarkedElement() {
+            const savedIndex = userBgmBookmarks[String(activeStoryId)];
+            if (savedIndex === undefined) return;
+
+            const targetElement = document.getElementById(`para-${savedIndex}`);
+            if (targetElement) {
+                targetElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+
+        // Finished reading story popup and complete badge save trigger
+        function finishReadingStory() {
+            const story = loadedStories.find(s => s.id === activeStoryId);
+            if (!story) return;
+
+            const storyIdStr = String(activeStoryId);
+
+            // Add to completed array if not already present
+            if (!userCompletedStories.includes(storyIdStr)) {
+                userCompletedStories.push(storyIdStr);
+                saveProgressState();
+            }
+
+            // Render nice congratulatory overlay dialog (Never use browser alert()!)
+            document.getElementById('congrats-story-title').innerText = story.title || `story #${story.id}`;
+            document.getElementById('congrats-modal').classList.remove('hidden');
+            document.getElementById('congrats-modal').classList.add('flex');
+        }
+
+        function closeCongratsModal() {
+            document.getElementById('congrats-modal').classList.add('hidden');
+            document.getElementById('congrats-modal').classList.remove('flex');
+            closeMaximizeModal();
+        }
+
+        // Close Immersive Overlay
+        function closeMaximizeModal() {
+            const modal = document.getElementById('maximize-modal');
+            const bodyContent = document.getElementById('modal-body-content');
+            const bgmPlayer = document.getElementById('global-bgm-player');
+
+            // stop video playback on close
+            const videos = bodyContent.querySelectorAll('video');
+            videos.forEach(v => v.pause());
+
+            // halt background ambient music on close
+            bgmPlayer.pause();
+            bgmPlayer.src = "";
+            isBgmPlaying = false;
+            activeStoryId = null;
+
+            bodyContent.classList.add('opacity-0');
+            bodyContent.classList.remove('animate-modal-in');
+            modal.classList.add('hidden');
+            document.body.classList.remove('overflow-hidden');
+            modal.style.backgroundImage = ""; // Clear background styling
+        }
+
+        // Run client paste parsing
+        function parseFromPaste() {
+            const rawText = document.getElementById('raw-data-paste').value;
+            parseStories(rawText);
+            showStatus('parsed and loaded raw text database workspace successfully.', 'success');
+            
+            // Set alert icon dot on reader tab to notify of changes
+            document.getElementById('settings-dot').classList.remove('hidden');
+            switchTab('reader');
+        }
+
+        // Fetch database from remote URL directly to the text paste workspace
+        async function fetchToPasteWorkspace() {
+            const urlInput = document.getElementById('db-link').value.trim();
+            if (!urlInput) {
+                showStatus('error: remote url link cannot be blank.', 'error');
+                return;
+            }
+
+            showStatus('fetching database text directly to workspace...', 'info');
+
+            try {
+                const response = await fetch(urlInput);
+                if (!response.ok) {
+                    throw new Error(`http error code: ${response.status}`);
+                }
+                const textResult = await response.text();
+                
+                // Paste directly into client paste workspace textarea
+                document.getElementById('raw-data-paste').value = textResult;
+                parseStories(textResult);
+                showStatus('fetched and pasted remote database directly to paste workspace. edit or run compiler when ready!', 'success');
+            } catch (err) {
+                console.error(err);
+                showStatus('failed to fetch text to workspace. check cors settings or url. error: ' + err.message, 'error');
+            }
+        }
+
+        // Fetch database from remote URL and compile immediately
+        async function fetchFromUrl() {
+            const urlInput = document.getElementById('db-link').value.trim();
+            const failedState = document.getElementById('failed-state');
+            const emptyState = document.getElementById('empty-state');
+            const gridContainer = document.getElementById('grid-container');
+            const searchBarContainer = document.getElementById('search-bar-container');
+
+            if (!urlInput) {
+                showStatus('error: remote url link cannot be blank.', 'error');
+                failedState.classList.remove('hidden');
+                gridContainer.classList.add('hidden');
+                emptyState.classList.add('hidden');
+                searchBarContainer.classList.add('hidden');
+                return;
+            }
+
+            showStatus('contacting server host. please wait...', 'info');
+
+            try {
+                const response = await fetch(urlInput);
+                if (!response.ok) {
+                    throw new Error(`http error code: ${response.status}`);
+                }
+                const textResult = await response.text();
+                
+                // Keep past workspace updated
+                document.getElementById('raw-data-paste').value = textResult;
+                parseStories(textResult);
+                showStatus('raw database retrieved, parsed and loaded into the explorer!', 'success');
+                
+                // Show alert/notify and switch to viewer grid
+                document.getElementById('settings-dot').classList.remove('hidden');
+                switchTab('reader');
+            } catch (err) {
+                console.error(err);
+                showStatus(`network connection failure. verify cors settings are allowed on your server host. error: ${err.message}`, 'error');
+                
+                // Populate with fallback demoContent so stories are still visible to prevent an empty screen
+                document.getElementById('raw-data-paste').value = demoContent.trim();
+                parseStories(demoContent);
+                
+                // Display warning banner at top of stories instead of completely breaking the page
+                showStatus('loaded fallback local database because raw url request failed due to sandbox constraints or cors blocks.', 'error');
+            }
+        }
+
+        // Dynamic Feedback Status
+        function showStatus(msg, type) {
+            const statusBox = document.getElementById('status-box');
+            statusBox.className = 'p-3 rounded-xl border text-xs leading-relaxed transition-all lowercase duration-300';
+            statusBox.innerHTML = '';
+            
+            let iconName = 'info';
+            if (type === 'success') {
+                statusBox.classList.add('bg-emerald-955/20', 'text-emerald-400', 'border-emerald-900/60');
+                iconName = 'check-circle';
+            } else if (type === 'error') {
+                statusBox.classList.add('bg-rose-955/20', 'text-rose-455', 'border-rose-900/60');
+                iconName = 'alert-triangle';
+            } else {
+                statusBox.classList.add('bg-slate-900', 'text-orange-400', 'border-slate-800');
+                iconName = 'info';
+            }
+
+            statusBox.innerHTML = `
+                <div class="flex gap-2 items-start">
+                    <i data-lucide="${iconName}" class="w-4 h-4 mt-0.5 flex-shrink-0"></i>
+                    <span>${msg}</span>
+                </div>
+            `;
+            statusBox.classList.remove('hidden');
+            lucide.createIcons();
+        }
+    </script>
+</body>
+</html>
